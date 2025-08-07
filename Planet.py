@@ -131,7 +131,7 @@ class CivilIndustry(Building):
         "money": {"base": 0, "inc": 0}
     }
 
-    def __init__(self, level: int, destroyed: int = 2):
+    def __init__(self, level: int, destroyed: int = 0):
         super().__init__(type="CivilIndustry", ELC=0, GoRP=0, VP=0, HP=0, GP=0, SP=0, money=0, level=level, destroyed=destroyed)
         self.allowed_landscapes = ["all"]
         self.landscape_bonuses = {}
