@@ -4,7 +4,7 @@ import sys
 import inspect
 
 class Building:
-    def __init__(self, type: str, ELC: int, GoRP: int, VP: int, HP: int, GP: int, SP: int, money: int, level: int, destroyed: bool = False):
+    def __init__(self, type: str, ELC: int, GoRP: int, VP: int, HP: int, GP: int, SP: int, money: int, level: int, destroyed: int = 0):
         self.type = type
         self.ELC = ELC
         self.GoRP = GoRP
@@ -13,10 +13,10 @@ class Building:
         self.GP = GP
         self.SP = SP
         self.money = money
-        self.destroyed = destroyed
         self.level = level
-        self.allowed_landscapes = ["all"]  # По умолчанию разрешено на всех buildable ландшафтах
-        self.landscape_bonuses = {}  # По умолчанию нет бонусов
+        self.destroyed = min(destroyed, level)
+        self.allowed_landscapes = ["all"]
+        self.landscape_bonuses = {}
 
     def to_dict(self):
         data = {
@@ -35,167 +35,235 @@ class Building:
             data["NeedsRC"] = self.NeedsRC
         return data
 
-class EmptyBuilding(Building):
-    def __init__(self, level=0):
-        super().__init__(type="EmptyBuilding", ELC=0, GoRP=0, VP=0, HP=0, GP=0, SP=0, money=0, level=0, destroyed=True)
-        self.allowed_landscapes = ["all"]  # Разрешено везде
+    def get_base_resources(self, eff_level):
+        if eff_level <= 0:
+            return {resource: 0 for resource in self.resources_config}
+        return {resource: config["base"] + config["inc"] * (eff_level - 1) for resource, config in self.resources_config.items()}
 
-    def LevelAdd(self):
-        pass
+class EmptyBuilding(Building):
+    resources_config = {
+        "ELC": {"base": 0, "inc": 0},
+        "GoRP": {"base": 0, "inc": 0},
+        "VP": {"base": 0, "inc": 0},
+        "HP": {"base": 0, "inc": 0},
+        "GP": {"base": 0, "inc": 0},
+        "SP": {"base": 0, "inc": 0},
+        "money": {"base": 0, "inc": 0}
+    }
+
+    def __init__(self, level=0):
+        super().__init__(type="EmptyBuilding", ELC=0, GoRP=0, VP=0, HP=0, GP=0, SP=0, money=0, level=0, destroyed=0)
+        self.allowed_landscapes = ["all"]
 
 class Town(Building):
-    def __init__(self, level: int, destroyed: bool = False):
-        super().__init__(type="Town", ELC=-200, GoRP=0, VP=0, HP=0, GP=-120, SP=-100, money=0, level=level, destroyed=destroyed)
+    resources_config = {
+        "ELC": {"base": -200, "inc": -120},
+        "GoRP": {"base": 0, "inc": 0},
+        "VP": {"base": 0, "inc": 0},
+        "HP": {"base": 0, "inc": 0},
+        "GP": {"base": -120, "inc": -100},
+        "SP": {"base": -100, "inc": -80},
+        "money": {"base": 0, "inc": 400}
+    }
+
+    def __init__(self, level: int, destroyed: int = 0):
+        super().__init__(type="Town", ELC=0, GoRP=0, VP=0, HP=0, GP=0, SP=0, money=0, level=level, destroyed=destroyed)
         self.allowed_landscapes = ["all"]
         self.landscape_bonuses = {}
-        for i in range(level-1):
-            self.LevelAdd()
-
-    def LevelAdd(self):
-        self.money += 400
-        self.ELC -= 120
-        self.GP -= 100
-        self.SP -= 80
 
 class Mining(Building):
-    def __init__(self, level: int, destroyed: bool = False):
-        super().__init__(type="Mining", ELC=-150, GoRP=200, VP=0, HP=0, GP=-40, SP=-25, money=0, level=level, destroyed=destroyed)
-        self.allowed_landscapes = ["all", "Mountains"]  # Только на горах
-        self.landscape_bonuses = {"Mountains": {"GoRP": 80}}
-        for i in range(level-1):
-            self.LevelAdd()
-    
-    def LevelAdd(self):
-        self.GoRP += 150
-        self.ELC -= 75
-        self.GP -= 20
-        self.SP -= 25
+    resources_config = {
+        "ELC": {"base": -150, "inc": -75},
+        "GoRP": {"base": 200, "inc": 150},
+        "VP": {"base": 0, "inc": 0},
+        "HP": {"base": 0, "inc": 0},
+        "GP": {"base": -40, "inc": -20},
+        "SP": {"base": -25, "inc": -25},
+        "money": {"base": 0, "inc": 0}
+    }
 
-#Do it
+    def __init__(self, level: int, destroyed: int = 0):
+        super().__init__(type="Mining", ELC=0, GoRP=0, VP=0, HP=0, GP=0, SP=0, money=0, level=level, destroyed=destroyed)
+        self.allowed_landscapes = ["all", "Mountains"]
+        self.landscape_bonuses = {"Mountains": {"GoRP": 80}}
+
 class Fortress(Building):
-    def __init__(self, level: int, destroyed: bool = False):
-        super().__init__(type="Fortress", ELC=-150, GoRP=200, VP=0, HP=0, GP=-40, SP=-25, money=0, level=level, destroyed=destroyed)
+    resources_config = {
+        "ELC": {"base": -150, "inc": -75},
+        "GoRP": {"base": 200, "inc": 150},
+        "VP": {"base": 0, "inc": 0},
+        "HP": {"base": 0, "inc": 0},
+        "GP": {"base": -40, "inc": -20},
+        "SP": {"base": -25, "inc": -25},
+        "money": {"base": 0, "inc": 0}
+    }
+
+    def __init__(self, level: int, destroyed: int = 0):
+        super().__init__(type="Fortress", ELC=0, GoRP=0, VP=0, HP=0, GP=0, SP=0, money=0, level=level, destroyed=destroyed)
         self.allowed_landscapes = []
         self.landscape_bonuses = {"Mountains": {"GoRP": 80}}
-        for i in range(level-1):
-            self.LevelAdd()
-    
-    def LevelAdd(self):
-        self.GoRP += 150
-        self.ELC -= 75
-        self.GP -= 20
-        self.SP -= 25
 
 class Electrostation(Building):
-    def __init__(self, level: int, destroyed: bool = False):
-        super().__init__(type="Electrostation", ELC=1000, GoRP=-75, VP=0, HP=0, GP=0, SP=0, money=0, level=level, destroyed=destroyed)
+    resources_config = {
+        "ELC": {"base": 1000, "inc": 800},
+        "GoRP": {"base": -75, "inc": -75},
+        "VP": {"base": 0, "inc": 0},
+        "HP": {"base": 0, "inc": 0},
+        "GP": {"base": 0, "inc": 0},
+        "SP": {"base": 0, "inc": 0},
+        "money": {"base": 0, "inc": 0}
+    }
+
+    def __init__(self, level: int, destroyed: int = 0):
+        super().__init__(type="Electrostation", ELC=0, GoRP=0, VP=0, HP=0, GP=0, SP=0, money=0, level=level, destroyed=destroyed)
         self.allowed_landscapes = ["all"]
         self.landscape_bonuses = {"Desert": {"ELC": 100}}
-        for i in range(level-1):
-            self.LevelAdd()
         self.NeedsRC = True
-
-    def LevelAdd(self):
-        self.ELC += 800
-        self.GoRP -= 75
 
 class CivilIndustry(Building):
-    def __init__(self, level: int, destroyed: bool = False):
-        super().__init__(type="CivilIndustry", ELC=-400, GoRP=-40, VP=0, HP=0, GP=200, SP=0, money=0, level=level, destroyed=destroyed)
+    resources_config = {
+        "ELC": {"base": -400, "inc": -300},
+        "GoRP": {"base": -40, "inc": -40},
+        "VP": {"base": 0, "inc": 0},
+        "HP": {"base": 0, "inc": 0},
+        "GP": {"base": 200, "inc": 150},
+        "SP": {"base": 0, "inc": 0},
+        "money": {"base": 0, "inc": 0}
+    }
+
+    def __init__(self, level: int, destroyed: int = 2):
+        super().__init__(type="CivilIndustry", ELC=0, GoRP=0, VP=0, HP=0, GP=0, SP=0, money=0, level=level, destroyed=destroyed)
         self.allowed_landscapes = ["all"]
         self.landscape_bonuses = {}
-        for i in range(level-1):
-            self.LevelAdd()
         self.NeedsRC = True
-
-    def LevelAdd(self):
-        self.GP += 150
-        self.ELC -= 300
-        self.GoRP -= 40
 
 class Farm(Building):
-    def __init__(self, level: int, destroyed: bool = False):
-        super().__init__(type="Farm", ELC=-100, GoRP=-20, VP=0, HP=0, GP=-40, SP=275, money=0, level=level, destroyed=destroyed)
+    resources_config = {
+        "ELC": {"base": -100, "inc": -60},
+        "GoRP": {"base": -20, "inc": -20},
+        "VP": {"base": 0, "inc": 0},
+        "HP": {"base": 0, "inc": 0},
+        "GP": {"base": -40, "inc": -40},
+        "SP": {"base": 275, "inc": 75},
+        "money": {"base": 0, "inc": 0}
+    }
+
+    def __init__(self, level: int, destroyed: int = 0):
+        super().__init__(type="Farm", ELC=0, GoRP=0, VP=0, HP=0, GP=0, SP=0, money=0, level=level, destroyed=destroyed)
         self.allowed_landscapes = ["all"]
         self.landscape_bonuses = {}
-        for i in range(level-1):
-            self.LevelAdd()
-    
-    def LevelAdd(self):
-        self.SP += 75
-        self.ELC -= 60
-        self.GP -= 40
-        self.GoRP -= 20
 
 class Military(Building):
-    def __init__(self, level: int, destroyed: bool = False):
-        super().__init__(type="Military", ELC=-400, GoRP=-75, VP=200, HP=0, GP=0, SP=0, money=0, level=level, destroyed=destroyed)
+    resources_config = {
+        "ELC": {"base": -400, "inc": -400},
+        "GoRP": {"base": -75, "inc": -75},
+        "VP": {"base": 200, "inc": 120},
+        "HP": {"base": 0, "inc": 0},
+        "GP": {"base": 0, "inc": 0},
+        "SP": {"base": 0, "inc": 0},
+        "money": {"base": 0, "inc": 0}
+    }
+
+    def __init__(self, level: int, destroyed: int = 0):
+        super().__init__(type="Military", ELC=0, GoRP=0, VP=0, HP=0, GP=0, SP=0, money=0, level=level, destroyed=destroyed)
         self.allowed_landscapes = ["all"]
         self.landscape_bonuses = {}
-        for i in range(level-1):
-            self.LevelAdd()
         self.NeedsRC = True
-    
-    def LevelAdd(self):
-        self.VP += 120
-        self.ELC -= 400
-        self.GoRP -= 75
 
 class ChemicalIndustry(Building):
-    def __init__(self, level: int, destroyed: bool = False):
-        super().__init__(type="ChemicalIndustry", ELC=-400, GoRP=-50, VP=0, HP=100, GP=0, SP=0, money=0, level=level, destroyed=destroyed)
+    resources_config = {
+        "ELC": {"base": -400, "inc": -400},
+        "GoRP": {"base": -50, "inc": -50},
+        "VP": {"base": 0, "inc": 0},
+        "HP": {"base": 100, "inc": 50},
+        "GP": {"base": 0, "inc": 0},
+        "SP": {"base": 0, "inc": 0},
+        "money": {"base": 0, "inc": 0}
+    }
+
+    def __init__(self, level: int, destroyed: int = 0):
+        super().__init__(type="ChemicalIndustry", ELC=0, GoRP=0, VP=0, HP=0, GP=0, SP=0, money=0, level=level, destroyed=destroyed)
         self.allowed_landscapes = ["all"]
         self.landscape_bonuses = {}
-        for i in range(level-1):
-            self.LevelAdd()
         self.NeedsRC = True
-    
-    def LevelAdd(self): 
-        self.HP += 50
-        self.ELC -= 400
-        self.GoRP -= 50
 
 class Science(Building):
-    def __init__(self, level: int, destroyed: bool = False):
-        super().__init__(type="Science", ELC=-200, GoRP=-40, VP=0, HP=-25, GP=-50, SP=-25, money=0, level=level, destroyed=destroyed)
+    resources_config = {
+        "ELC": {"base": -200, "inc": -200},
+        "GoRP": {"base": -40, "inc": -20},
+        "VP": {"base": 0, "inc": 0},
+        "HP": {"base": -25, "inc": -25},
+        "GP": {"base": -50, "inc": -50},
+        "SP": {"base": -25, "inc": -25},
+        "money": {"base": 0, "inc": 0}
+    }
+
+    def __init__(self, level: int, destroyed: int = 0):
+        super().__init__(type="Science", ELC=0, GoRP=0, VP=0, HP=0, GP=0, SP=0, money=0, level=level, destroyed=destroyed)
         self.allowed_landscapes = ["all"]
         self.landscape_bonuses = {}
-        for i in range(level-1):
-            self.LevelAdd()
-
-    def LevelAdd(self):
-        self.ELC -= 200
-        self.GoRP -= 20
-        self.HP -= 25
-        self.GP -= 50
-        self.SP -= 25
 
 class Forest(Building):
+    resources_config = {
+        "ELC": {"base": 0, "inc": 0},
+        "GoRP": {"base": 0, "inc": 0},
+        "VP": {"base": 0, "inc": 0},
+        "HP": {"base": 0, "inc": 0},
+        "GP": {"base": 0, "inc": 0},
+        "SP": {"base": 0, "inc": 0},
+        "money": {"base": 0, "inc": 0}
+    }
+
     def __init__(self):
-        super().__init__(type="Forest", ELC=0, GoRP=0, VP=0, HP=0, GP=0, SP=0, money=0, level=0, destroyed=True)
+        super().__init__(type="Forest", ELC=0, GoRP=0, VP=0, HP=0, GP=0, SP=0, money=0, level=0, destroyed=0)
         self.allowed_landscapes = ["all"]
 
 class SwampVegetation(Building):
+    resources_config = {
+        "ELC": {"base": 0, "inc": 0},
+        "GoRP": {"base": 0, "inc": 0},
+        "VP": {"base": 0, "inc": 0},
+        "HP": {"base": 0, "inc": 0},
+        "GP": {"base": 0, "inc": 0},
+        "SP": {"base": 0, "inc": 0},
+        "money": {"base": 0, "inc": 0}
+    }
+
     def __init__(self):
-        super().__init__(type="SwampVegetation", ELC=0, GoRP=0, VP=0, HP=0, GP=0, SP=0, money=0, level=0, destroyed=True)
+        super().__init__(type="SwampVegetation", ELC=0, GoRP=0, VP=0, HP=0, GP=0, SP=0, money=0, level=0, destroyed=0)
         self.allowed_landscapes = ["all"]
 
 class ArcticForest(Building):
+    resources_config = {
+        "ELC": {"base": 0, "inc": 0},
+        "GoRP": {"base": 0, "inc": 0},
+        "VP": {"base": 0, "inc": 0},
+        "HP": {"base": 0, "inc": 0},
+        "GP": {"base": 0, "inc": 0},
+        "SP": {"base": 0, "inc": 0},
+        "money": {"base": 0, "inc": 0}
+    }
+
     def __init__(self):
-        super().__init__(type="ArcticForest", ELC=0, GoRP=0, VP=0, HP=0, GP=0, SP=0, money=0, level=0, destroyed=True)
+        super().__init__(type="ArcticForest", ELC=0, GoRP=0, VP=0, HP=0, GP=0, SP=0, money=0, level=0, destroyed=0)
         self.allowed_landscapes = ["all"]
 
 class PowerLines(Building):
-    def __init__(self, level: int, destroyed: bool = False):
+    resources_config = {
+        "ELC": {"base": 0, "inc": 0},
+        "GoRP": {"base": 0, "inc": 0},
+        "VP": {"base": 0, "inc": 0},
+        "HP": {"base": 0, "inc": 0},
+        "GP": {"base": 0, "inc": 0},
+        "SP": {"base": 0, "inc": 0},
+        "money": {"base": 0, "inc": 0}
+    }
+
+    def __init__(self, level: int, destroyed: int = 0):
         super().__init__(type="PowerLines", ELC=0, GoRP=0, VP=0, HP=0, GP=0, SP=0, money=0, level=level, destroyed=destroyed)
         self.allowed_landscapes = ["all"]
         self.landscape_bonuses = {}
-        for i in range(level-1):
-            self.LevelAdd()
         self.NeedsRC = False
-
-    def LevelAdd(self):
-        pass
 
 class Landscape:
     def __init__(self, typeL: str, buildable: bool):
@@ -433,10 +501,8 @@ class Tile:
         self.landscape = landscape
         self.building = building
         
-        # Проверка ограничений на размещение
         if building.type != "EmptyBuilding":
             if "all" in building.allowed_landscapes:
-                # Разрешено строить везде, игнорируем список и buildable
                 pass
             else:
                 if landscape.type not in building.allowed_landscapes:
@@ -445,21 +511,23 @@ class Tile:
                     if not landscape.buildable:
                         print(f"Building {building.type} can be placed on {landscape.type} despite it being globally forbidden.")
 
-        # Применение бонусов
-        if hasattr(building, "landscape_bonuses") and landscape.type in building.landscape_bonuses:
-            bonuses = building.landscape_bonuses[landscape.type]
-            for resource, bonus in bonuses.items():
-                if hasattr(building, resource):
-                    current_value = getattr(building, resource)
-                    setattr(building, resource, current_value + bonus * building.level)
-                else:
-                    wrn.warn(f"[WARNING]: Building {building.type} does not have resource {resource} for bonus.")
-
     def to_dict(self):
         return {
             "landscape": self.landscape.to_dict(),
             "building": self.building.to_dict()
         }
+
+    def get_effective_resources(self):
+        building = self.building
+        eff_level = building.level - building.destroyed
+        resources = building.get_base_resources(eff_level)
+        
+        if eff_level > 0 and hasattr(building, "landscape_bonuses") and self.landscape.type in building.landscape_bonuses:
+            bonuses = building.landscape_bonuses[self.landscape.type]
+            for resource, bonus in bonuses.items():
+                if resource in resources:
+                    resources[resource] += bonus * eff_level
+        return resources
 
 class Region:
     def __init__(self, tiles: list, positions: list, typeL: str):
@@ -523,7 +591,7 @@ class Planet:
         for region in self.Regions:
             try:
                 for pos, tile in zip(region.positions, region.tiles):
-                    if hasattr(tile.building, "type") and tile.building.type == "Electrostation" and not tile.building.destroyed:
+                    if tile.building.type == "Electrostation" and tile.building.level > tile.building.destroyed:
                         stations.append((region, pos))
             except: continue
         return stations
@@ -533,7 +601,7 @@ class Planet:
         for region in self.Regions:
             try:
                 for pos, tile in zip(region.positions, region.tiles):
-                    if hasattr(tile.building, "type") and tile.building.type == "Town" and not tile.building.destroyed:
+                    if tile.building.type == "Town" and tile.building.level > tile.building.destroyed:
                         towns.append((region, pos))
             except: continue
         return towns
@@ -543,21 +611,24 @@ class Planet:
         for region in self.Regions:
             try:
                 for pos, tile in zip(region.positions, region.tiles):
-                    if hasattr(tile.building, "type") and tile.building.type == "Farm" and not tile.building.destroyed:
+                    if tile.building.type == "Farm" and tile.building.level > tile.building.destroyed:
                         farms.append((region, pos))
             except: continue
         return farms
 
-    def _needs_electricity(self, building):
-        return hasattr(building, "ELC") and building.ELC < 0 and not building.destroyed
-
-    def _rc_available(self, region, pos, towns):
-        for reg_town, pos_town in towns:
-            if reg_town == region and self._adjacent_positions(pos, pos_town):
-                return True
-            if reg_town != region and self._adjacent_positions(pos, pos_town):
-                return True
-        return False
+    def get_adjacent_regions(self, region):
+        adj_regions = set()
+        for other_region in self.Regions:
+            if other_region == region:
+                continue
+            for pos1 in region.positions:
+                for pos2 in other_region.positions:
+                    if self._adjacent_positions(pos1, pos2):
+                        adj_regions.add(other_region)
+                        break
+                if other_region in adj_regions:
+                    break
+        return adj_regions
 
     def calculate(self):
         total = {
@@ -575,21 +646,29 @@ class Planet:
         towns = self._find_towns()
         farms = self._find_farms()
 
+        # Determine regions with RC availability
+        town_regions = set()
+        for region in self.Regions:
+            for tile in region.tiles:
+                if tile.building.type == "Town" and tile.building.level > tile.building.destroyed:
+                    town_regions.add(region)
+                    break
+        rc_available_regions = set(town_regions)
+        for region in town_regions:
+            rc_available_regions.update(self.get_adjacent_regions(region))
+
         for region in self.Regions:
             try:
                 for pos, tile in zip(region.positions, region.tiles):
                     b = tile.building
-                    if b.destroyed:
+                    eff_level = b.level - b.destroyed
+                    if eff_level <= 0:
                         continue
-                    total["ELC"] += b.ELC
-                    total["GoRP"] += b.GoRP
-                    total["VP"] += b.VP
-                    total["HP"] += b.HP
-                    total["GP"] += b.GP
-                    total["SP"] += b.SP
-                    total["money"] += b.money
+                    resources = tile.get_effective_resources()
+                    for resource, value in resources.items():
+                        total[resource] += value
 
-                    if self._needs_electricity(b):
+                    if resources["ELC"] < 0:
                         has_power = False
                         for reg_station, pos_station in stations:
                             station_tile = None
@@ -597,7 +676,7 @@ class Planet:
                                 if p == pos_station:
                                     station_tile = t
                                     break
-                            if station_tile and getattr(station_tile.building, "type", None) == "EmptyBuilding":
+                            if station_tile and station_tile.building.level <= station_tile.building.destroyed:
                                 continue
                             if reg_station == region and self._adjacent_positions(pos, pos_station):
                                 has_power = True
@@ -606,7 +685,7 @@ class Planet:
                                 for p in reg_station.positions:
                                     idx = reg_station.positions.index(p)
                                     neighbor_tile = reg_station.tiles[idx]
-                                    if getattr(neighbor_tile.building, "type", None) == "EmptyBuilding":
+                                    if neighbor_tile.building.level <= neighbor_tile.building.destroyed:
                                         continue
                                     if self._adjacent_positions(pos, p):
                                         has_power = True
@@ -617,7 +696,7 @@ class Planet:
                             warnings.append(f"[WARNING]: No electricity for {b.type} at {pos} in region {self.Regions.index(region)}")
 
                     if hasattr(b, "NeedsRC") and b.NeedsRC:
-                        if not self._rc_available(region, pos, towns):
+                        if region not in rc_available_regions:
                             warnings.append(f"[WARNING]: No RC for {b.type} at {pos} in region {self.Regions.index(region)}")
             except: continue
 
@@ -625,16 +704,15 @@ class Planet:
             for reg_town, pos_town in towns:
                 if reg_farm == reg_town:
                     warnings.append(f"[WARNING]: Farm at {pos_farm} and Town at {pos_town} are in the same region {self.Regions.index(reg_farm)}")
-    
 
         towns_pos = []
         minings_pos = []
         for region in self.Regions:
             try:
                 for pos, tile in zip(region.positions, region.tiles):
-                    if hasattr(tile.building, "type") and tile.building.type == "Town":
+                    if tile.building.type == "Town" and tile.building.level > tile.building.destroyed:
                         towns_pos.append((region, pos))
-                    if hasattr(tile.building, "type") and tile.building.type == "Mining":
+                    if tile.building.type == "Mining" and tile.building.level > tile.building.destroyed:
                         minings_pos.append((region, pos))
             except: continue
         for reg_town, pos_town in towns_pos:
@@ -655,7 +733,6 @@ class Planet:
         return total
 
     def generate(self, WaterType: int, TerrainType: str, UseForest: bool):
-        """Generate a planet with the specified world type and number of regions"""
         from PlanetGenerator import AdvancedPlanetGenerator
         generator = AdvancedPlanetGenerator()
         new_planet = generator.generate(self.name, len(self.Regions), WaterType, TerrainType, UseForest, self.Regions)

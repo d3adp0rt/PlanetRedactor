@@ -73,7 +73,6 @@ class GUI_Planet_class():
         self.name = name
         self.planet.name = name
 
-
 GUI_Planet = GUI_Planet_class()
 
 def build_texture_names():
@@ -162,11 +161,10 @@ def main():
             if event.type == pg.QUIT:
                 running = False
             elif event.type == pg.KEYDOWN:
-                if NameOfPlanet_active == False:
+                if not NameOfPlanet_active:
                     if event.key == pg.K_s:
                         GUI_Planet.planet.dump()
                         print("Planet Saved")
-
                     elif event.key == pg.K_l:
                         GUI_Planet.planet.load(gm.select_json_file())
                         GUI_Planet.name = GUI_Planet.planet.name
@@ -175,21 +173,17 @@ def main():
                         NameOfPlanet_FONT = fontName.render(GUI_Planet.name, True, (255, 255, 255))
                         NameOfPlanet_FONT_rect = NameOfPlanet_FONT.get_rect(center=(screen_W // 2, screen_H - screen_H/3))
                         print("Planet Loaded")
-
                     elif event.key == pg.K_g:
                         GUI_Planet.planet.generate(int(WaterTypeWorld), TypeOfWorld, UseForestValue)
                         GUI_Planet.planet.dump()
                         GUI_Planet.planet.load()
-
                     elif event.key == pg.K_c:
                         print(GUI_Planet.planet.calculate())
-
                     elif event.key == pg.K_u:
                         GUI_Planet.updateSize(int(SizeOfPlanet), AddExtUp, AddExtCent, AddExtDown)
                         GUI_Planet.updateName(NameOfPlanet)
                         NameOfPlanet_FONT = fontName.render(GUI_Planet.name, True, (255, 255, 255))
                         NameOfPlanet_FONT_rect = NameOfPlanet_FONT.get_rect(center=(screen_W // 2, screen_H - screen_H/3))
-
                     elif event.key == pg.K_x:
                         GUI_Planet.updateName(NameOfPlanet)
                         NameOfPlanet_FONT = fontName.render(GUI_Planet.name, True, (255, 255, 255))
@@ -206,6 +200,18 @@ def main():
                         menu_pos = event.pos
                     else:
                         show_menu = False
+                elif event.button == 2:  # Middle click
+                    clicked_tile = gm.find_clicked_tile(event.pos, GUI_Planet.planet)
+                    if clicked_tile:
+                        region, tile_index = clicked_tile
+                        building = region.tiles[tile_index].building
+                        if building.level >= 1:
+                            max_destroyed = building.level
+                            menu_items = [str(i) for i in range(max_destroyed + 1)]
+                            show_menu = True
+                            menu_type = "destroyed"
+                            menu_pos = event.pos
+                            selected_tile = (region, tile_index)
                 elif event.button == 1:  # Left click
                     if show_menu and menu_rect:
                         selected_item = gm.handle_menu_click(event.pos, menu_rect, menu_items, menu_type)
@@ -255,10 +261,23 @@ def main():
                                     print(f"Warning: {w}")
                                     region.tiles[tile_index] = pt.Tile(new_landscape, old_building)
                                 show_menu = False
+                            elif menu_type == "destroyed" and selected_tile:
+                                region, tile_index = selected_tile
+                                try:
+                                    new_destroyed = int(selected_item)
+                                    building = region.tiles[tile_index].building
+                                    if 0 <= new_destroyed <= building.level:
+                                        building.destroyed = new_destroyed
+                                    else:
+                                        print(f"Invalid destroyed level: {new_destroyed} for building level {building.level}")
+                                except ValueError:
+                                    print(f"Invalid selection: {selected_item}")
+                                show_menu = False
                         else:
                             show_menu = False
                     else:
                         show_menu = False
+
             elif event.type == pg.KEYDOWN and event.key == pg.K_ESCAPE:
                 show_menu = False
 

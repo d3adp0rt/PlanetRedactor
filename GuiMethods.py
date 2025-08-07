@@ -68,8 +68,8 @@ def load_texture_variants(path: str, texture_name: str, target_size=(183, 183)):
         for png_file in sorted(png_files): 
             try:
                 texture_path = os.path.join(texture_folder, png_file)
-                texture = pg.image.load(texture_path).convert_alpha()
-                texture = pg.transform.scale(texture, target_size)
+                menutexture = pg.image.load(texture_path).convert_alpha()
+                texture = pg.transform.scale(menutexture, target_size)
                 variants.append(texture)
             except pg.error as e:
                 print(f"Ошибка загрузки текстуры {texture_path}: {e}")
@@ -105,7 +105,7 @@ def LoadTextures(path: str):
         else:
             textures[building_type] = create_placeholder_texture(183, 183)
     
-    level_textures = ["Lvl_0", "Lvl_1", "Lvl_2", "Lvl_3", "Lvl_4"]
+    level_textures = ["Lvl_0", "Lvl_1", "Lvl_2", "Lvl_3", "Lvl_4", "DES_Lvl_1", "DES_Lvl_2", "DES_Lvl_3", "DES_Lvl_4"]
     for level_name in level_textures:
         texture_path = os.path.join(path, f"{level_name}.png")
         if os.path.exists(texture_path):
@@ -211,13 +211,13 @@ def MakeTile(tile: pt.Tile, region_index: int = 0, tile_index: int = 0):
     if tile.building.type not in ["PowerLines", "EmptyBuilding", "Forest", "ArcticForest", "SwampVegetation"]:
         level_texture = textures.get(f"Lvl_{tile.building.level}", create_placeholder_texture(183, 183))
         texture.blit(level_texture, (0, 0))
+        for i in range(tile.building.destroyed):
+            levelDES_texture = textures.get(f"DES_Lvl_{tile.building.level-i}", create_placeholder_texture(183, 183))
+            texture.blit(levelDES_texture, (0, 0))
     
     return texture
 
 def MakeRegion(region: pt.Region, region_index: int = 0):
-    """
-    Создает текстуру региона, передавая индекс региона для уникальности тайлов
-    """
     center_x, center_y = 540/2, 460/2
     half_hex = 90
     center_x1, center_y1 = center_x, center_y
@@ -226,7 +226,6 @@ def MakeRegion(region: pt.Region, region_index: int = 0):
 
     texture = pg.Surface((550, 460), pg.SRCALPHA)
     
-    # Создаем тайлы с уникальными идентификаторами
     tiles = [MakeTile(tile, region_index, tile_index) for tile_index, tile in enumerate(region.tiles[:7])]
 
     if region.typeL == "CenterReg":
@@ -373,7 +372,6 @@ def find_clicked_tile(mouse_pos, planet):
     return None
 
 def get_preview_texture(item_name: str):
-    """Получает текстуру для превью в меню"""
     if item_name in textures:
         return textures[item_name]
     
@@ -386,7 +384,10 @@ def draw_menu(screen, font, menu_type, items, mouse_pos):
     menu_width = 250
     item_height = 35
     padding = 10
-    title_height = 25 if menu_type in ["buildings", "landscapes", "levels"] else 0
+    if menu_type == "main":
+        title_height = 0
+    else:
+        title_height = 25
     max_height = screen.get_height() - 40
     max_rows = max((max_height - title_height - padding * 2) // item_height, 1)
     num_columns = (len(items) + max_rows - 1) // max_rows
@@ -399,7 +400,16 @@ def draw_menu(screen, font, menu_type, items, mouse_pos):
     pg.draw.rect(screen, (255, 255, 255), menu_rect, 2)
     
     if title_height > 0:
-        title = menu_type.capitalize()
+        if menu_type == "buildings":
+            title = "Select Building Type"
+        elif menu_type == "landscapes":
+            title = "Select Landscape Type"
+        elif menu_type == "levels":
+            title = "Select Building Level"
+        elif menu_type == "destroyed":
+            title = "Set Destroyed Level"
+        else:
+            title = ""
         title_surface = font.render(title, True, (255, 255, 0))
         screen.blit(title_surface, (menu_x + 5, menu_y + 5))
     
@@ -416,7 +426,6 @@ def draw_menu(screen, font, menu_type, items, mouse_pos):
         preview_x = item_x + 5
         text_x = item_x + 40
         
-        # Получаем превью текстуру
         if isinstance(item, str):
             preview_texture = get_preview_texture(item)
             if preview_texture:
@@ -436,7 +445,7 @@ def handle_menu_click(mouse_pos, menu_rect, items, menu_type):
     menu_width = 250
     item_height = 35
     padding = 10
-    title_height = 25 if menu_type in ["buildings", "landscapes", "levels"] else 0
+    title_height = 25 if menu_type != "main" else 0
 
     max_height = menu_rect.height - padding * 2 - title_height
     max_rows = max(max_height // item_height, 1)
@@ -503,7 +512,7 @@ def process_text_input(rect, text, active, events, allow_negative=False, digits_
             if event.key == pg.K_BACKSPACE:
                 text = text[:-1]
             elif event.key == pg.K_RETURN:
-                pass  # можно здесь обработку по Enter добавить, если надо
+                pass
             else:
                 char = event.unicode
                 if digits_only:
