@@ -87,6 +87,7 @@ class Mining(Building):
         self.allowed_landscapes = ["all", "Mountains"]
         self.landscape_bonuses = {"Mountains": {"GoRP": 80}}
 
+#do it
 class Fortress(Building):
     resources_config = {
         "ELC": {"base": -150, "inc": -75},
