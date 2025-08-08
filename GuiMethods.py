@@ -84,7 +84,7 @@ def LoadTextures(path: str):
     global textures, texture_variants
     
     landscape_types = list(pt.LandscapeTypes.keys())
-    forest_buildings = ["Forest", "ArcticForest", "SwampVegetation"]
+    forest_buildings = list(pt.ForestTypes.keys())
     
     for landscape_type in landscape_types:
         texture_variants[landscape_type] = load_texture_variants(path, landscape_type)
@@ -141,7 +141,7 @@ def reset_texture_selection():
 
 def initialize_random_textures():
     landscape_types = list(pt.LandscapeTypes.keys())
-    forest_buildings = ["Forest", "ArcticForest", "SwampVegetation"]
+    forest_buildings = list(pt.ForestTypes.keys())
     
     for landscape_type in landscape_types:
         get_random_texture(landscape_type)
@@ -208,7 +208,7 @@ def MakeTile(tile: pt.Tile, region_index: int = 0, tile_index: int = 0):
         building_texture = get_random_texture_for_tile(tile.building.type, tile_id)
         texture.blit(building_texture, (0, 0))
     
-    if tile.building.type not in ["PowerLines", "EmptyBuilding", "Forest", "ArcticForest", "SwampVegetation"]:
+    if tile.building.type not in ["PowerLines", "EmptyBuilding"] + list(pt.ForestTypes.keys()):
         level_texture = textures.get(f"Lvl_{tile.building.level}", create_placeholder_texture(183, 183))
         texture.blit(level_texture, (0, 0))
         for i in range(tile.building.destroyed):
@@ -466,7 +466,7 @@ def handle_menu_click(mouse_pos, menu_rect, items, menu_type):
     return None
 
 def get_available_levels(building_type):
-    if building_type in ["EmptyBuilding", "Forest", "ArcticForest", "SwampVegetation"]:
+    if building_type in ["EmptyBuilding"] + list(pt.ForestTypes.keys()):
         return []
     elif building_type == "PowerLines":
         return [1]
