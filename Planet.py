@@ -608,15 +608,17 @@ class Planet:
     def get_adjacent_regions(self, region):
         adj_regions = set()
         for other_region in self.Regions:
-            if other_region == region:
-                continue
-            for pos1 in region.positions:
-                for pos2 in other_region.positions:
-                    if self._adjacent_positions(pos1, pos2):
-                        adj_regions.add(other_region)
+            try:
+                if other_region == region:
+                    continue
+                for pos1 in region.positions:
+                    for pos2 in other_region.positions:
+                        if self._adjacent_positions(pos1, pos2):
+                            adj_regions.add(other_region)
+                            break
+                    if other_region in adj_regions:
                         break
-                if other_region in adj_regions:
-                    break
+            except: continue
         return adj_regions
 
     def calculate(self):
@@ -638,10 +640,12 @@ class Planet:
         # Determine regions with RC availability
         town_regions = set()
         for region in self.Regions:
-            for tile in region.tiles:
-                if tile.building.type == "Town" and tile.building.level > tile.building.destroyed:
-                    town_regions.add(region)
-                    break
+            try:
+                for tile in region.tiles:
+                    if tile.building.type == "Town" and tile.building.level > tile.building.destroyed:
+                        town_regions.add(region)
+                        break
+            except: continue
         rc_available_regions = set(town_regions)
         for region in town_regions:
             rc_available_regions.update(self.get_adjacent_regions(region))
