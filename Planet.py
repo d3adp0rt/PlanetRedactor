@@ -90,19 +90,19 @@ class Mining(Building):
 #do it
 class Fortress(Building):
     resources_config = {
-        "ELC": {"base": -150, "inc": -75},
-        "GoRP": {"base": 200, "inc": 150},
+        "ELC": {"base": -200, "inc": -75},
+        "GoRP": {"base": 0, "inc": 0},
         "VP": {"base": 0, "inc": 0},
-        "HP": {"base": 0, "inc": 0},
-        "GP": {"base": -40, "inc": -20},
-        "SP": {"base": -25, "inc": -25},
+        "HP": {"base": -5, "inc": 0},
+        "GP": {"base": -50, "inc": -20},
+        "SP": {"base": -15, "inc": -25},
         "money": {"base": 0, "inc": 0}
     }
 
     def __init__(self, level: int, destroyed: int = 0):
         super().__init__(type="Fortress", ELC=0, GoRP=0, VP=0, HP=0, GP=0, SP=0, money=0, level=level, destroyed=destroyed)
-        self.allowed_landscapes = []
-        self.landscape_bonuses = {"Mountains": {"GoRP": 80}}
+        self.allowed_landscapes = ["all"]
+        self.landscape_bonuses = {}
 
 class Electrostation(Building):
     resources_config = {
@@ -204,7 +204,7 @@ class Science(Building):
         self.allowed_landscapes = ["all"]
         self.landscape_bonuses = {}
 
-class Forest(Building):
+class ForestBase(Building):
     resources_config = {
         "ELC": {"base": 0, "inc": 0},
         "GoRP": {"base": 0, "inc": 0},
@@ -215,39 +215,21 @@ class Forest(Building):
         "money": {"base": 0, "inc": 0}
     }
 
-    def __init__(self):
-        super().__init__(type="Forest", ELC=0, GoRP=0, VP=0, HP=0, GP=0, SP=0, money=0, level=0, destroyed=0)
+    def __init__(self, typeL):
+        super().__init__(type=typeL, ELC=0, GoRP=0, VP=0, HP=0, GP=0, SP=0, money=0, level=0, destroyed=0)
         self.allowed_landscapes = ["all"]
 
-class SwampVegetation(Building):
-    resources_config = {
-        "ELC": {"base": 0, "inc": 0},
-        "GoRP": {"base": 0, "inc": 0},
-        "VP": {"base": 0, "inc": 0},
-        "HP": {"base": 0, "inc": 0},
-        "GP": {"base": 0, "inc": 0},
-        "SP": {"base": 0, "inc": 0},
-        "money": {"base": 0, "inc": 0}
-    }
-
+class Forest(ForestBase):
     def __init__(self):
-        super().__init__(type="SwampVegetation", ELC=0, GoRP=0, VP=0, HP=0, GP=0, SP=0, money=0, level=0, destroyed=0)
-        self.allowed_landscapes = ["all"]
+        super().__init__("Forest")
 
-class ArcticForest(Building):
-    resources_config = {
-        "ELC": {"base": 0, "inc": 0},
-        "GoRP": {"base": 0, "inc": 0},
-        "VP": {"base": 0, "inc": 0},
-        "HP": {"base": 0, "inc": 0},
-        "GP": {"base": 0, "inc": 0},
-        "SP": {"base": 0, "inc": 0},
-        "money": {"base": 0, "inc": 0}
-    }
-
+class SwampVegetation(ForestBase):
     def __init__(self):
-        super().__init__(type="ArcticForest", ELC=0, GoRP=0, VP=0, HP=0, GP=0, SP=0, money=0, level=0, destroyed=0)
-        self.allowed_landscapes = ["all"]
+        super().__init__("SwampVegetation")
+        
+class ArcticForest(ForestBase):
+    def __init__(self):
+        super().__init__("ArcticForest")
 
 class PowerLines(Building):
     resources_config = {
@@ -564,15 +546,22 @@ class LowerReg(Region):
 
 current_module = sys.modules[__name__]
 
-def get_subclasses_dict(base_class):
+def get_subclasses_dict(base_class, exclude=None):
+    exclude = exclude or set()
     subclasses = {}
     for name, obj in inspect.getmembers(current_module):
-        if inspect.isclass(obj) and issubclass(obj, base_class) and obj is not base_class:
+        if (
+            inspect.isclass(obj) and 
+            issubclass(obj, base_class) and 
+            obj is not base_class and 
+            obj not in exclude
+        ):
             subclasses[name] = obj
     return subclasses
 
-BuildingTypes = get_subclasses_dict(Building)
+BuildingTypes = get_subclasses_dict(Building, exclude={ForestBase})
 LandscapeTypes = get_subclasses_dict(Landscape)
+ForestTypes = get_subclasses_dict(ForestBase)
 
 class Planet:
     def __init__(self, name: str, Regions: list):

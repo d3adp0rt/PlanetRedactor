@@ -1,4 +1,6 @@
+import sys
 import random
+import inspect
 import Planet as pt
 from collections import deque
 from abc import ABC, abstractmethod
@@ -25,7 +27,7 @@ class GreenPlanet(PlanetType):
         return {"scale": 0.15, "octaves": 4, "persistence": 0.6}
 
     def get_terrain_landscapes(self):
-        return [[pt.Plains, 0.4], [pt.Savannah, 0.3], [pt.Mountains, 0.15], [pt.Hills, 0.15]]
+        return [[pt.Plains, 0.4], [pt.Savannah, 0.2], [pt.Mountains, 0.15], [pt.Hills, 0.15]]
 
     def get_forest_chance(self):
         return 30
@@ -266,6 +268,16 @@ class ToxicPlanet(PlanetType):
         elif water_body_type == 'sea' and size >= 8:
             return pt.ToxicPool()
         return pt.ToxicPool()
+
+def get_subclasses_dict(base_class):
+    subclasses = {}
+    current_module = sys.modules[__name__]
+    for name, obj in inspect.getmembers(current_module):
+        if inspect.isclass(obj) and issubclass(obj, base_class) and obj is not base_class:
+            subclasses[name] = obj
+    return subclasses
+
+PlanetTypes = get_subclasses_dict(PlanetType)
 
 class AdvancedPlanetGenerator:
     def __init__(self):

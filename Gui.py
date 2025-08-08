@@ -2,6 +2,7 @@ import pygame as pg
 import Planet as pt
 from Planet import *
 import GuiMethods as gm
+from PlanetGenerator import PlanetTypes
 
 class GUI_Planet_class():
     def __init__(self):
@@ -120,7 +121,8 @@ def main():
 
     margin, gap = 20, 10
     y = screen_H - 400 - margin
-    options = ["Green", "Dry", "Cold", "Dead", "Lithoid", "Ideal", "Ecumenopolis", "Burned", "Aquatic", "Volcanic", "Crystalline", "Swamp", "Toxic"]
+    options = list(PlanetTypes.keys())
+    options = [s.removesuffix("Planet") for s in options]
     TypeOfWorld = options[0]
     selector_open = False
     selector_rect = pg.Rect(margin, y, 150, 30)
