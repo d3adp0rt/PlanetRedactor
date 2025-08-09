@@ -473,23 +473,50 @@ def get_available_levels(building_type):
     else:
         return [1, 2, 3, 4]
 
-def process_selector(rect, options, selected, open_flag, mouse_pos, mouse_click):
+def process_selector(rect, options, selected, open_flag, mouse_pos, mouse_click, max_height=400):
+    max_items_per_col = max_height // rect.height
+    num_cols = (len(options) + max_items_per_col - 1) // max_items_per_col
+
     if mouse_click and rect.collidepoint(mouse_pos):
         open_flag = not open_flag
     elif mouse_click and open_flag:
-        inside_list = any(
-            pg.Rect(rect.x, rect.y + rect.height + i * rect.height, rect.width, rect.height).collidepoint(mouse_pos)
-            for i in range(len(options))
-        )
+        inside_list = False
+        for col in range(num_cols):
+            for i in range(max_items_per_col):
+                idx = col * max_items_per_col + i
+                if idx >= len(options):
+                    break
+                option_rect = pg.Rect(
+                    rect.x + col * rect.width,
+                    rect.y + rect.height + i * rect.height,
+                    rect.width,
+                    rect.height
+                )
+                if option_rect.collidepoint(mouse_pos):
+                    inside_list = True
+                    break
+            if inside_list:
+                break
         if not inside_list and not rect.collidepoint(mouse_pos):
             open_flag = False
+
     if open_flag and mouse_click:
-        for i, option in enumerate(options):
-            option_rect = pg.Rect(rect.x, rect.y + rect.height + i * rect.height, rect.width, rect.height)
-            if option_rect.collidepoint(mouse_pos):
-                selected = option
-                open_flag = False
-                break
+        for col in range(num_cols):
+            for i in range(max_items_per_col):
+                idx = col * max_items_per_col + i
+                if idx >= len(options):
+                    break
+                option_rect = pg.Rect(
+                    rect.x + col * rect.width,
+                    rect.y + rect.height + i * rect.height,
+                    rect.width,
+                    rect.height
+                )
+                if option_rect.collidepoint(mouse_pos):
+                    selected = options[idx]
+                    open_flag = False
+                    break
+
     return selected, open_flag
 
 def process_int_input(rect, text, active, events):
@@ -527,18 +554,31 @@ def process_checkbox(rect, value, mouse_pos, mouse_click):
         value = not value
     return value
 
-def draw_selector(screen, font, options, selected, is_open, rect):
+def draw_selector(screen, font, options, selected, is_open, rect, max_height=400):
     pg.draw.rect(screen, (70, 70, 70), rect)
     txt_surf = font.render(selected, True, (255, 255, 255))
     screen.blit(txt_surf, (rect.x + 5, rect.y + 5))
     pg.draw.rect(screen, (255, 255, 255), rect, 2)
+
     if is_open:
-        for i, option in enumerate(options):
-            option_rect = pg.Rect(rect.x, rect.y + rect.height + i * rect.height, rect.width, rect.height)
-            pg.draw.rect(screen, (50, 50, 50), option_rect)
-            opt_txt = font.render(option, True, (200, 200, 200))
-            screen.blit(opt_txt, (option_rect.x + 5, option_rect.y + 5))
-            pg.draw.rect(screen, (255, 255, 255), option_rect, 1)
+        max_items_per_col = max_height // rect.height
+        num_cols = (len(options) + max_items_per_col - 1) // max_items_per_col
+
+        for col in range(num_cols):
+            for i in range(max_items_per_col):
+                idx = col * max_items_per_col + i
+                if idx >= len(options):
+                    break
+                option_rect = pg.Rect(
+                    rect.x + col * rect.width,
+                    rect.y + rect.height + i * rect.height,
+                    rect.width,
+                    rect.height
+                )
+                pg.draw.rect(screen, (50, 50, 50), option_rect)
+                opt_txt = font.render(options[idx], True, (200, 200, 200))
+                screen.blit(opt_txt, (option_rect.x + 5, option_rect.y + 5))
+                pg.draw.rect(screen, (255, 255, 255), option_rect, 1)
 
 def draw_int_input(screen, font, text, is_active, rect):
     pg.draw.rect(screen, (70, 70, 70), rect)

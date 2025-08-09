@@ -269,6 +269,196 @@ class ToxicPlanet(PlanetType):
             return pt.ToxicPool()
         return pt.ToxicPool()
 
+class ArchipelagoPlanet(PlanetType):
+    def get_noise_params(self):
+        return {"scale": 0.28, "octaves": 3, "persistence": 0.45}
+
+    def get_terrain_landscapes(self):
+        return [[pt.Islands, 0.35], [pt.Beaches, 0.25], [pt.CoralReefs, 0.2], [pt.Plains, 0.2]]
+
+    def get_forest_chance(self):
+        return 30
+
+    def get_water_landscape(self, water_body_type, size):
+        if water_body_type == 'river':
+            return pt.Channel()
+        elif water_body_type == 'ocean' and size >= 20:
+            return pt.DeepOcean()
+        elif water_body_type == 'sea' and size >= 8:
+            return pt.ShallowWater()
+        return pt.ShallowWater()
+
+class HighlandPlanet(PlanetType):
+    def get_noise_params(self):
+        return {"scale": 0.09, "octaves": 6, "persistence": 0.55}
+
+    def get_terrain_landscapes(self):
+        return [[pt.Mountains, 0.5], [pt.Hills, 0.25], [pt.Caves, 0.15], [pt.Plains, 0.1]]
+
+    def get_forest_chance(self):
+        return 10
+
+    def get_water_landscape(self, water_body_type, size):
+        if water_body_type == 'river':
+            return pt.River()
+        elif water_body_type == 'ocean' and size >= 20:
+            return pt.Ocean()
+        elif water_body_type == 'sea' and size >= 8:
+            return pt.Water()
+        return pt.Water()
+
+class BrackishPlanet(PlanetType):
+    def get_noise_params(self):
+        return {"scale": 0.16, "octaves": 4, "persistence": 0.6}
+
+    def get_terrain_landscapes(self):
+        return [[pt.Plains, 0.4], [pt.Beaches, 0.2], [pt.Salt_Lake, 0.25], [pt.Plains, 0.15]]
+
+    def get_forest_chance(self):
+        return 15
+
+    def get_water_landscape(self, water_body_type, size):
+        if water_body_type == 'river':
+            return pt.Oasis()
+        elif water_body_type == 'ocean' and size >= 20:
+            return pt.Salt_Lake()
+        elif water_body_type == 'sea' and size >= 8:
+            return pt.Salt_Lake()
+        return pt.Water()
+
+class PermafrostPlanet(PlanetType):
+    def get_noise_params(self):
+        return {"scale": 0.14, "octaves": 5, "persistence": 0.5}
+
+    def get_terrain_landscapes(self):
+        return [[pt.Snow, 0.45], [pt.Ice, 0.35], [pt.Tundra, 0.15], [pt.Plains, 0.05]]
+
+    def get_forest_chance(self):
+        return 20
+
+    def get_water_landscape(self, water_body_type, size):
+        if water_body_type == 'river':
+            return pt.FrozenRiver()
+        elif water_body_type == 'ocean' and size >= 20:
+            return pt.FrozenSea()
+        elif water_body_type == 'sea' and size >= 8:
+            return pt.Water()
+        return pt.Water()
+
+class AcidicArchipelago(PlanetType):
+    def get_noise_params(self):
+        return {"scale": 0.2, "octaves": 3, "persistence": 0.7}
+
+    def get_terrain_landscapes(self):
+        return [[pt.PoisonPools, 0.4], [pt.Wasteland, 0.3], [pt.Plains, 0.2], [pt.Islands, 0.1]]
+
+    def get_forest_chance(self):
+        return 0
+
+    def get_water_landscape(self, water_body_type, size):
+        if water_body_type == 'river':
+            return pt.AcidStream()
+        elif water_body_type == 'ocean' and size >= 20:
+            return pt.AcidOcean()
+        elif water_body_type == 'sea' and size >= 8:
+            return pt.Acid()
+        return pt.Acid()
+
+class CrystalArchipelago(PlanetType):
+    def get_noise_params(self):
+        return {"scale": 0.12, "octaves": 5, "persistence": 0.45}
+
+    def get_terrain_landscapes(self):
+        return [[pt.CrystalFormations, 0.4], [pt.CrystalCaves, 0.2], [pt.Islands, 0.2], [pt.Beaches, 0.2]]
+
+    def get_forest_chance(self):
+        return 5
+
+    def get_water_landscape(self, water_body_type, size):
+        if water_body_type == 'river':
+            return pt.CrystalStream()
+        elif water_body_type == 'ocean' and size >= 20:
+            return pt.CrystalLake()
+        elif water_body_type == 'sea' and size >= 8:
+            return pt.CrystalPool()
+        return pt.CrystalPool()
+
+class UrbanSprawlPlanet(PlanetType):
+    def get_noise_params(self):
+        return {"scale": 0.24, "octaves": 2, "persistence": 0.6}
+
+    def get_terrain_landscapes(self):
+        return [[pt.Plains, 0.6], [pt.UrbanCore, 0.3], [pt.Gardens, 0.1]]
+
+    def get_forest_chance(self):
+        return 5
+
+    def get_water_landscape(self, water_body_type, size):
+        if water_body_type == 'river':
+            return pt.Canal()
+        elif water_body_type == 'ocean' and size >= 20:
+            return pt.Reservoir()
+        elif water_body_type == 'sea' and size >= 8:
+            return pt.Water()
+        return pt.Water()
+
+class BoggyPlanet(PlanetType):
+    def get_noise_params(self):
+        return {"scale": 0.2, "octaves": 3, "persistence": 0.5}
+
+    def get_terrain_landscapes(self):
+        return [[pt.Swampland, 0.6], [pt.BogLands, 0.25], [pt.Plains, 0.15]]
+
+    def get_forest_chance(self):
+        return 40
+
+    def get_water_landscape(self, water_body_type, size):
+        if water_body_type == 'river':
+            return pt.SwampRiver()
+        elif water_body_type == 'ocean' and size >= 20:
+            return pt.SwampLake()
+        elif water_body_type == 'sea' and size >= 8:
+            return pt.SwampWater()
+        return pt.SwampWater()
+
+class VolcanicArchipelago(PlanetType):
+    def get_noise_params(self):
+        return {"scale": 0.07, "octaves": 7, "persistence": 0.65}
+
+    def get_terrain_landscapes(self):
+        return [[pt.Lava, 0.4], [pt.VolcanicRock, 0.3], [pt.Geysers, 0.15], [pt.Beaches, 0.15]]
+
+    def get_forest_chance(self):
+        return 2
+
+    def get_water_landscape(self, water_body_type, size):
+        if water_body_type == 'river':
+            return pt.LavaStream()
+        elif water_body_type == 'ocean' and size >= 20:
+            return pt.VolcanicLake()
+        elif water_body_type == 'sea' and size >= 8:
+            return pt.Lava()
+        return pt.Lava()
+
+class DesertOasisPlanet(PlanetType):
+    def get_noise_params(self):
+        return {"scale": 0.11, "octaves": 4, "persistence": 0.75}
+
+    def get_terrain_landscapes(self):
+        return [[pt.Desert, 0.55], [pt.Mesa, 0.2], [pt.Scorched, 0.15], [pt.Plains, 0.1]]
+
+    def get_forest_chance(self):
+        return 2
+
+    def get_water_landscape(self, water_body_type, size):
+        if water_body_type == 'river':
+            return pt.Oasis()
+        elif water_body_type == 'ocean' and size >= 20:
+            return pt.Salt_Lake()
+        elif water_body_type == 'sea' and size >= 8:
+            return pt.Salt_Lake()
+        return pt.Water()
+
 def get_subclasses_dict(base_class):
     subclasses = {}
     current_module = sys.modules[__name__]
