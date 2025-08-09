@@ -592,7 +592,7 @@ class AdvancedPlanetGenerator:
                     landscape = self.weighted_choice(terrain_landscapes)
                 
                 building = (pt.EmptyBuilding() if regions_st[i].tiles[counter].building.type in 
-                           ["EmptyBuilding", "Forest", "ArcticForest", "SwampVegetation"] 
+                           ["EmptyBuilding"] + list(pt.ForestTypes.keys()) 
                            else regions_st[i].tiles[counter].building)
                 
                 if landscape.type == "Plains" and random.randint(0, 100) < forest_chance and use_forest:
