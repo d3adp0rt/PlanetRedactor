@@ -1,6 +1,8 @@
 
 import sys
 import inspect
+import os
+import json
 
 current_module = sys.modules[__name__]
 
@@ -247,6 +249,81 @@ class PowerLines(Building):
         self.allowed_landscapes = ["all"]
         self.landscape_bonuses = {}
         self.NeedsRC = False
+
+def load_building_mods():
+    mods_path = "mods/Buildings"
+    
+    if not os.path.exists(mods_path):
+        return
+    
+    for filename in os.listdir(mods_path):
+        if filename.endswith('.json'):
+            try:
+                with open(os.path.join(mods_path, filename), 'r', encoding='utf-8') as f:
+                    mod_data = json.load(f)
+                
+                mod_info = mod_data.get("mod_info", {})
+                mod_name = mod_info.get("name", "Unknown Mod")
+                mod_version = mod_info.get("version", "Unknown Version")
+                mod_author = mod_info.get("author", "Unknown Author")
+                mod_description = mod_info.get("description", "")
+
+                print("=" * 10 + " MOD INFO " + "=" * 10)
+                print(f"Loading mod: {mod_name} v{mod_version} by {mod_author}")
+                if mod_description:
+                    print(f"Description: {mod_description}")
+                print("=" * 30, '\n')
+
+                if 'buildings' in mod_data:
+                    for building_data in mod_data['buildings']:
+                        create_building_class_from_json(building_data)
+                        
+                        
+            except Exception as e:
+                print(f"Ошибка при загрузке мода {filename}: {e}")
+
+def create_building_class_from_json(building_data):
+    """Создает класс строения из JSON данных"""
+    class_name = building_data['name']
+    
+    resources_config = {}
+    if 'resources' in building_data:
+        for resource, config in building_data['resources'].items():
+            resources_config[resource] = {
+                'base': config.get('base', 0),
+                'inc': config.get('inc', 0)
+            }
+    else:
+        resources_config = {
+            "ELC": {"base": 0, "inc": 0},
+            "GoRP": {"base": 0, "inc": 0},
+            "VP": {"base": 0, "inc": 0},
+            "HP": {"base": 0, "inc": 0},
+            "GP": {"base": 0, "inc": 0},
+            "SP": {"base": 0, "inc": 0},
+            "money": {"base": 0, "inc": 0}
+        }
+    
+    def __init__(self, level: int, destroyed: int = 0):
+        super(DynamicBuildingClass, self).__init__(
+            type=class_name, 
+            ELC=0, GoRP=0, VP=0, HP=0, GP=0, SP=0, money=0, 
+            level=level, destroyed=destroyed
+        )
+        self.allowed_landscapes = building_data.get('allowed_landscapes', ["all"])
+        self.landscape_bonuses = building_data.get('landscape_bonuses', {})
+        
+        if building_data.get('needs_rc', False):
+            self.NeedsRC = True
+    
+    DynamicBuildingClass = type(class_name, (Building,), {
+        'resources_config': resources_config,
+        '__init__': __init__
+    })
+    
+    setattr(current_module, class_name, DynamicBuildingClass)
+
+load_building_mods()
 
 def get_subclasses_dict(base_class, exclude=None):
     exclude = exclude or set()

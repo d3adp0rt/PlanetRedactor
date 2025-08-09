@@ -1,0 +1,45 @@
+{
+  "mod_info": {
+    "name": "Fantasy Landscapes Pack",
+    "version": "1.0.0",
+    "author": "ModAuthor",
+    "description": "Добавляет фэнтезийные ландшафты в игру"
+  },
+  "landscapes": [
+    {
+      "name": "EnchantedForest",
+      "type": "EnchantedForest",
+      "buildable": true
+    },
+    {
+      "name": "DarkMarsh",
+      "type": "DarkMarsh",
+      "buildable": false
+    },
+    {
+      "name": "FloatingIslands",
+      "type": "FloatingIslands",
+      "buildable": true
+    },
+    {
+      "name": "MysticGrove",
+      "type": "MysticGrove",
+      "buildable": true
+    },
+    {
+      "name": "CursedLands",
+      "type": "CursedLands",
+      "buildable": false
+    },
+    {
+      "name": "DragonNest",
+      "type": "DragonNest",
+      "buildable": false
+    },
+    {
+      "name": "FairyRing",
+      "type": "FairyRing",
+      "buildable": true
+    }
+  ]
+}

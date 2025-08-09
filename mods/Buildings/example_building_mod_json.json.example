@@ -1,0 +1,74 @@
+{
+  "mod_info": {
+    "name": "Advanced Buildings Pack",
+    "version": "1.0.0",
+    "author": "ModAuthor",
+    "description": "Добавляет новые типы строений в игру"
+  },
+  "buildings": [
+    {
+      "name": "SolarPlant",
+      "resources": {
+        "ELC": {"base": 800, "inc": 600},
+        "GoRP": {"base": -30, "inc": -30},
+        "VP": {"base": 0, "inc": 0},
+        "HP": {"base": 0, "inc": 0},
+        "GP": {"base": 0, "inc": 0},
+        "SP": {"base": 0, "inc": 0},
+        "money": {"base": 0, "inc": 0}
+      },
+      "allowed_landscapes": ["all", "Desert"],
+      "landscape_bonuses": {
+        "Desert": {"ELC": 200}
+      },
+      "needs_rc": true
+    },
+    {
+      "name": "Hydroponics",
+      "resources": {
+        "ELC": {"base": -200, "inc": -150},
+        "GoRP": {"base": -10, "inc": -10},
+        "VP": {"base": 0, "inc": 0},
+        "HP": {"base": 0, "inc": 0},
+        "GP": {"base": -20, "inc": -20},
+        "SP": {"base": 400, "inc": 120},
+        "money": {"base": 0, "inc": 0}
+      },
+      "allowed_landscapes": ["all"],
+      "landscape_bonuses": {},
+      "needs_rc": true
+    },
+    {
+      "name": "SpacePort",
+      "resources": {
+        "ELC": {"base": -500, "inc": -300},
+        "GoRP": {"base": -100, "inc": -50},
+        "VP": {"base": 150, "inc": 100},
+        "HP": {"base": 0, "inc": 0},
+        "GP": {"base": 0, "inc": 0},
+        "SP": {"base": 0, "inc": 0},
+        "money": {"base": 0, "inc": 800}
+      },
+      "allowed_landscapes": ["all"],
+      "landscape_bonuses": {},
+      "needs_rc": true
+    },
+    {
+      "name": "GeothermalPlant",
+      "resources": {
+        "ELC": {"base": 1200, "inc": 900},
+        "GoRP": {"base": -40, "inc": -40},
+        "VP": {"base": 0, "inc": 0},
+        "HP": {"base": 0, "inc": 0},
+        "GP": {"base": 0, "inc": 0},
+        "SP": {"base": 0, "inc": 0},
+        "money": {"base": 0, "inc": 0}
+      },
+      "allowed_landscapes": ["all", "Mountains"],
+      "landscape_bonuses": {
+        "Mountains": {"ELC": 300}
+      },
+      "needs_rc": true
+    }
+  ]
+}

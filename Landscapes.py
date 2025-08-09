@@ -1,5 +1,8 @@
 import sys
 import inspect
+import json
+import os
+from pathlib import Path
 
 class Landscape:
     def __init__(self, typeL: str, buildable: bool):
@@ -232,6 +235,60 @@ class Scorched(Landscape):
     def __init__(self):
         super().__init__("Scorched", True)
 
+def load_landscapes_from_json():
+    mods_path = Path("mods/Landscapes")
+    
+    if not mods_path.exists():
+        return
+    
+    for json_file in mods_path.glob("*.json"):
+        try:
+            with open(json_file, 'r', encoding='utf-8') as f:
+                data = json.load(f)
+                
+            if not isinstance(data, dict):
+                print(f"Warning: Invalid JSON structure in {json_file}")
+                continue
+                
+            mod_info = data.get("mod_info", {})
+            mod_name = mod_info.get("name", "Unknown Mod")
+            mod_version = mod_info.get("version", "Unknown Version")
+            mod_author = mod_info.get("author", "Unknown Author")
+            mod_description = mod_info.get("description", "")
+            
+            print("=" * 10 + " MOD INFO " + "=" * 10)
+            print(f"Loading mod: {mod_name} v{mod_version} by {mod_author}")
+            if mod_description:
+                print(f"Description: {mod_description}")
+            print("=" * 30, '\n')
+            
+            if "landscapes" not in data:
+                print(f"Warning: No 'landscapes' key in {json_file}")
+                continue
+                
+            for landscape_data in data["landscapes"]:
+                name = landscape_data.get("name")
+                landscape_type = landscape_data.get("type", name)
+                buildable = landscape_data.get("buildable", True)
+                
+                if not name:
+                    continue
+                
+                if hasattr(current_module, name):
+                    print(f"Warning: Landscape {name} already exists, skipping")
+                    continue
+                
+                dynamic_class = type(name, (Landscape,), {
+                    '__init__': lambda self, t=landscape_type, b=buildable: super(type(self), self).__init__(t, b)
+                })
+                
+                setattr(current_module, name, dynamic_class)
+                
+        except json.JSONDecodeError as e:
+            print(f"Error parsing JSON file {json_file}: {e}")
+        except Exception as e:
+            print(f"Error loading landscapes from {json_file}: {e}")
+
 current_module = sys.modules[__name__]
 
 def get_subclasses_dict(base_class, exclude=None):
@@ -247,4 +304,5 @@ def get_subclasses_dict(base_class, exclude=None):
             subclasses[name] = obj
     return subclasses
 
+load_landscapes_from_json()
 LandscapeTypes = get_subclasses_dict(Landscape)
