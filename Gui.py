@@ -177,8 +177,6 @@ def main():
                         print("Planet Loaded")
                     elif event.key == pg.K_g:
                         GUI_Planet.planet.generate(int(WaterTypeWorld), TypeOfWorld, UseForestValue)
-                        GUI_Planet.planet.dump()
-                        GUI_Planet.planet.load()
                     elif event.key == pg.K_c:
                         print(GUI_Planet.planet.calculate())
                     elif event.key == pg.K_u:
