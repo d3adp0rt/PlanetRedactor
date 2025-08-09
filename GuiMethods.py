@@ -7,6 +7,7 @@ import os, random
 textures = {}
 texture_variants = {} 
 selected_variants = {}
+placeholder = None
 
 SCALE = 0.5
 BUILDING_TYPES = list(pt.BuildingTypes.keys())
@@ -53,11 +54,6 @@ def get_random_texture(texture_name: str):
         selected_variants[texture_name] = placeholder
         return placeholder
 
-def create_placeholder_texture(w, h, color=(128, 0, 128)): 
-    surf = pg.Surface((w, h))
-    surf.fill(color)
-    return surf
-
 def load_texture_variants(path: str, texture_name: str, target_size=(183, 183)):
     variants = []
     texture_folder = os.path.join(path, texture_name)
@@ -81,7 +77,10 @@ def load_texture_variants(path: str, texture_name: str, target_size=(183, 183)):
     return variants
 
 def LoadTextures(path: str):
-    global textures, texture_variants
+    global textures, texture_variants, placeholder
+
+    placeholder = pg.image.load("textures/PlaceHolder.png").convert_alpha()
+    placeholder = pg.transform.scale(placeholder, (183, 183))
     
     landscape_types = list(pt.LandscapeTypes.keys())
     forest_buildings = list(pt.ForestTypes.keys())
@@ -123,6 +122,7 @@ def LoadTextures(path: str):
         "LowerReg": "LowerReg.png", 
         "UpperReg": "UpperReg.png",
     }
+
     for region_name, filename in regions.items():
         texture_path = os.path.join(path, filename)
         if os.path.exists(texture_path):
@@ -193,7 +193,7 @@ def select_json_file(start_path="."):
 
 def create_placeholder_texture(w, h):
     surf = pg.Surface((w, h))
-    surf.fill((100, 100, 100))
+    surf.blit(placeholder, (0, 0))
     return surf
 
 def MakeTile(tile: pt.Tile, region_index: int = 0, tile_index: int = 0):
