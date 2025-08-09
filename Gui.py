@@ -2,7 +2,8 @@ import pygame as pg
 import Planet as pt
 from Planet import *
 import GuiMethods as gm
-from PlanetGenerator import PlanetTypes
+from PlanetTypes import PlanetTypes
+from Landscapes import *
 
 class GUI_Planet_class():
     def __init__(self):
