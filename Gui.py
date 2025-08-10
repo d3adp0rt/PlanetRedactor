@@ -102,9 +102,27 @@ def create_landscape(landscape_type):
     except TypeError:
         return cls()
 
+# New helper function to draw a button with text and return if clicked
+def draw_button(screen, font, text, rect, color=(200, 200, 200), text_color=(0, 0, 0), hovered=False):
+    pg.draw.rect(screen, (150, 150, 150) if hovered else color, rect)
+    pg.draw.rect(screen, (0, 0, 0), rect, 2)
+    text_surf = font.render(text, True, text_color)
+    text_rect = text_surf.get_rect(center=rect.center)
+    screen.blit(text_surf, text_rect)
+    return rect.collidepoint(pg.mouse.get_pos())
+
+# New helper function to draw tooltip
+def draw_tooltip(screen, font, text, pos):
+    if text:
+        tooltip_surf = font.render(text, True, (255, 255, 255), (50, 50, 50))
+        tooltip_rect = tooltip_surf.get_rect(topleft=(pos[0] + 10, pos[1] + 10))
+        pg.draw.rect(screen, (50, 50, 50), tooltip_rect.inflate(10, 10))
+        screen.blit(tooltip_surf, tooltip_rect)
+
 def main():
     pg.init()
     font = pg.font.SysFont(None, 20)
+    button_font = pg.font.SysFont(None, 24)
     fontName = pg.font.SysFont(None, 150)
     screen_W, screen_H = 1800, 900
     screen = pg.display.set_mode((screen_W, screen_H))
@@ -120,38 +138,72 @@ def main():
     selected_tile = None
     selected_building_type = None
 
+    # Define panel dimensions
+    top_panel_height = 50
+    bottom_panel_height = 100
+    side_panel_width = 300  # Right panel for tools/menus if needed
+
+    # Top panel: Action buttons
+    button_width, button_height = 150, 40
+    button_margin = 10
+    buttons = [
+        {"text": "Save", "rect": pg.Rect(button_margin, button_margin, button_width, button_height), "tooltip": "Save the planet (Shortcut: S)"},
+        {"text": "Load", "rect": pg.Rect(button_margin * 2 + button_width, button_margin, button_width, button_height), "tooltip": "Load a planet (Shortcut: L)"},
+        {"text": "Generate", "rect": pg.Rect(button_margin * 3 + button_width * 2, button_margin, button_width, button_height), "tooltip": "Generate planet (Shortcut: G)"},
+        {"text": "Calculate", "rect": pg.Rect(button_margin * 4 + button_width * 3, button_margin, button_width, button_height), "tooltip": "Calculate planet stats (Shortcut: C)"},
+        {"text": "Update Size", "rect": pg.Rect(button_margin * 5 + button_width * 4, button_margin, button_width, button_height), "tooltip": "Update planet size (Shortcut: U)"},
+        {"text": "Update Name", "rect": pg.Rect(button_margin * 6 + button_width * 5, button_margin, button_width, button_height), "tooltip": "Update planet name (Shortcut: X)"},
+    ]
+
+    # Bottom panel: Options
     margin, gap = 20, 10
-    y = screen_H - 400 - margin
+    bottom_y = screen_H - bottom_panel_height + margin // 2
     options = list(PlanetTypes.keys())
     options = [s.removesuffix("Planet") for s in options]
     TypeOfWorld = options[0]
     selector_open = False
-    selector_rect = pg.Rect(margin, y, 150, 30)
+    selector_rect = pg.Rect(margin, bottom_y, 150, 30)
+    selector_tooltip = "Select world type"
 
     WaterTypeWorld = '1'
-    int_rect = pg.Rect(margin + 150 + gap, y, 150, 30)
+    int_rect = pg.Rect(margin + 150 + gap, bottom_y, 150, 30)
     int_active = False
+    water_tooltip = "Enter water type (integer)"
 
     UseForestValue = False
-    checkbox_rect = pg.Rect(margin + 150 + gap + 150 + gap, y + 5, 20, 20)
+    checkbox_rect = pg.Rect(margin + 150 + gap + 150 + gap, bottom_y + 5, 20, 20)
+    forest_tooltip = "Use forest value in generation"
 
     SizeOfPlanet = '1'
-    SizeOfPlanet_rect = pg.Rect(screen_W - margin - 150, y, 150, 30)
+    SizeOfPlanet_rect = pg.Rect(screen_W // 2 - 200, bottom_y, 150, 30)
     SizeOfPlanet_active = False
+    size_tooltip = "Enter planet size (integer)"
 
     NameOfPlanet = 'Empty planet'
-    NameOfPlanet_rect = pg.Rect(screen_W - margin - 150 - gap - 350, y, 350, 30)
+    NameOfPlanet_rect = pg.Rect(screen_W // 2 - 25, bottom_y, 350, 30)
     NameOfPlanet_active = False
-
-    NameOfPlanet_FONT = fontName.render(NameOfPlanet, True, (255, 255, 255))
-    NameOfPlanet_FONT_rect = NameOfPlanet_FONT.get_rect(center=(screen_W // 2, screen_H - screen_H / 3))
+    name_tooltip = "Enter planet name"
 
     AddExtUp = False
-    AddExtUp_rect = pg.Rect(screen_W - margin - gap - 20, y + 40, 20, 20)
+    AddExtUp_rect = pg.Rect(screen_W - margin - gap - 20 - 125, bottom_y, 20, 20)
+    up_ext_tooltip = "Add top extension"
+
     AddExtCent = False
-    AddExtCent_rect = pg.Rect(screen_W - margin - gap * 2 - 40, y + 40, 20, 20)
+    AddExtCent_rect = pg.Rect(screen_W - margin - gap * 2 - 40 - 125, bottom_y, 20, 20)
+    cent_ext_tooltip = "Add center extension"
+
     AddExtDown = False
-    AddExtDown_rect = pg.Rect(screen_W - margin - gap * 3 - 60, y + 40, 20, 20)
+    AddExtDown_rect = pg.Rect(screen_W - margin - gap * 3 - 60 - 125, bottom_y, 20, 20)
+    down_ext_tooltip = "Add bottom extension"
+
+    # Planet name display
+    NameOfPlanet_FONT = fontName.render(NameOfPlanet, True, (255, 255, 255))
+    padding = 380
+    NameOfPlanet_FONT_rect = NameOfPlanet_FONT.get_rect(center=(screen_W // 2, top_panel_height + (screen_H - top_panel_height - bottom_panel_height + padding) // 2))
+
+    # Tooltip variable
+    current_tooltip = ""
+    tooltip_pos = (0, 0)
 
     running = True
     while running:
@@ -159,11 +211,13 @@ def main():
         mouse_pos = pg.mouse.get_pos()
         mouse_click = any(e.type == pg.MOUSEBUTTONDOWN and e.button == 1 for e in events)
 
+        current_tooltip = ""  # Reset tooltip each frame
+
         for event in events:
             if event.type == pg.QUIT:
                 running = False
             elif event.type == pg.KEYDOWN:
-                if not NameOfPlanet_active:
+                if not NameOfPlanet_active and not int_active and not SizeOfPlanet_active:
                     if event.key == pg.K_s:
                         GUI_Planet.planet.dump()
                         print("Planet Saved")
@@ -173,7 +227,7 @@ def main():
                         GUI_Planet.updateName(GUI_Planet.name)
                         NameOfPlanet = GUI_Planet.name
                         NameOfPlanet_FONT = fontName.render(GUI_Planet.name, True, (255, 255, 255))
-                        NameOfPlanet_FONT_rect = NameOfPlanet_FONT.get_rect(center=(screen_W // 2, screen_H - screen_H/3))
+                        NameOfPlanet_FONT_rect = NameOfPlanet_FONT.get_rect(center=(screen_W // 2, top_panel_height + (screen_H - top_panel_height - bottom_panel_height + padding) // 2))
                         print("Planet Loaded")
                     elif event.key == pg.K_g:
                         GUI_Planet.planet.generate(int(WaterTypeWorld), TypeOfWorld, UseForestValue)
@@ -183,14 +237,14 @@ def main():
                         GUI_Planet.updateSize(int(SizeOfPlanet), AddExtUp, AddExtCent, AddExtDown)
                         GUI_Planet.updateName(NameOfPlanet)
                         NameOfPlanet_FONT = fontName.render(GUI_Planet.name, True, (255, 255, 255))
-                        NameOfPlanet_FONT_rect = NameOfPlanet_FONT.get_rect(center=(screen_W // 2, screen_H - screen_H/3))
+                        NameOfPlanet_FONT_rect = NameOfPlanet_FONT.get_rect(center=(screen_W // 2, top_panel_height + (screen_H - top_panel_height - bottom_panel_height + padding) // 2))
                     elif event.key == pg.K_x:
                         GUI_Planet.updateName(NameOfPlanet)
                         NameOfPlanet_FONT = fontName.render(GUI_Planet.name, True, (255, 255, 255))
-                        NameOfPlanet_FONT_rect = NameOfPlanet_FONT.get_rect(center=(screen_W // 2, screen_H - screen_H/3))
+                        NameOfPlanet_FONT_rect = NameOfPlanet_FONT.get_rect(center=(screen_W // 2, top_panel_height + (screen_H - top_panel_height - bottom_panel_height + padding) // 2))
 
             elif event.type == pg.MOUSEBUTTONDOWN:
-                if event.button == 3:  # Right click
+                if event.button == 3:  # Right click for context menu
                     clicked_tile = gm.find_clicked_tile(event.pos, GUI_Planet.planet)
                     if clicked_tile:
                         selected_tile = clicked_tile
@@ -200,7 +254,7 @@ def main():
                         menu_pos = event.pos
                     else:
                         show_menu = False
-                elif event.button == 2:  # Middle click
+                elif event.button == 2:  # Middle click for destroyed levels
                     clicked_tile = gm.find_clicked_tile(event.pos, GUI_Planet.planet)
                     if clicked_tile:
                         region, tile_index = clicked_tile
@@ -212,7 +266,37 @@ def main():
                             menu_type = "destroyed"
                             menu_pos = event.pos
                             selected_tile = (region, tile_index)
-                elif event.button == 1:  # Left click
+                elif event.button == 1:  # Left click handling
+                    # Handle top panel buttons
+                    for btn in buttons:
+                        if btn["rect"].collidepoint(event.pos):
+                            if btn["text"] == "Save":
+                                GUI_Planet.planet.dump()
+                                print("Planet Saved")
+                            elif btn["text"] == "Load":
+                                GUI_Planet.planet.load(gm.select_json_file())
+                                GUI_Planet.name = GUI_Planet.planet.name
+                                GUI_Planet.updateName(GUI_Planet.name)
+                                NameOfPlanet = GUI_Planet.name
+                                NameOfPlanet_FONT = fontName.render(GUI_Planet.name, True, (255, 255, 255))
+                                NameOfPlanet_FONT_rect = NameOfPlanet_FONT.get_rect(center=(screen_W // 2, top_panel_height + (screen_H - top_panel_height - bottom_panel_height + padding) // 2))
+                                print("Planet Loaded")
+                            elif btn["text"] == "Generate":
+                                GUI_Planet.planet.generate(int(WaterTypeWorld), TypeOfWorld, UseForestValue)
+                            elif btn["text"] == "Calculate":
+                                print(GUI_Planet.planet.calculate())
+                            elif btn["text"] == "Update Size":
+                                GUI_Planet.updateSize(int(SizeOfPlanet), AddExtUp, AddExtCent, AddExtDown)
+                                GUI_Planet.updateName(NameOfPlanet)
+                                NameOfPlanet_FONT = fontName.render(GUI_Planet.name, True, (255, 255, 255))
+                                NameOfPlanet_FONT_rect = NameOfPlanet_FONT.get_rect(center=(screen_W // 2, top_panel_height + (screen_H - top_panel_height - bottom_panel_height + padding) // 2))
+                            elif btn["text"] == "Update Name":
+                                GUI_Planet.updateName(NameOfPlanet)
+                                NameOfPlanet_FONT = fontName.render(GUI_Planet.name, True, (255, 255, 255))
+                                NameOfPlanet_FONT_rect = NameOfPlanet_FONT.get_rect(center=(screen_W // 2, top_panel_height + (screen_H - top_panel_height - bottom_panel_height + padding) // 2))
+                            break
+
+                    # Handle menu clicks if menu is shown
                     if show_menu and menu_rect:
                         selected_item = gm.handle_menu_click(event.pos, menu_rect, menu_items, menu_type)
                         if selected_item:
@@ -281,7 +365,7 @@ def main():
             elif event.type == pg.KEYDOWN and event.key == pg.K_ESCAPE:
                 show_menu = False
 
-        screen.fill((125, 125, 125))
+        # Process inputs (bottom panel)
         TypeOfWorld, selector_open = gm.process_selector(selector_rect, options, TypeOfWorld, selector_open, mouse_pos, mouse_click)
         WaterTypeWorld, int_active = gm.process_int_input(int_rect, WaterTypeWorld, int_active, events)
         SizeOfPlanet, SizeOfPlanet_active = gm.process_int_input(SizeOfPlanet_rect, SizeOfPlanet, SizeOfPlanet_active, events)
@@ -291,21 +375,71 @@ def main():
         AddExtCent = gm.process_checkbox(AddExtCent_rect, AddExtCent, mouse_pos, mouse_click)
         AddExtDown = gm.process_checkbox(AddExtDown_rect, AddExtDown, mouse_pos, mouse_click)
 
+        # Fill screen and draw panels
+        screen.fill((125, 125, 125))
+
+        # Draw top panel background
+        pg.draw.rect(screen, (100, 100, 100), (0, 0, screen_W, top_panel_height))
+        pg.draw.line(screen, (0, 0, 0), (0, top_panel_height), (screen_W, top_panel_height), 2)
+
+        # Draw bottom panel background
+        pg.draw.rect(screen, (100, 100, 100), (0, screen_H - bottom_panel_height, screen_W, bottom_panel_height))
+        pg.draw.line(screen, (0, 0, 0), (0, screen_H - bottom_panel_height), (screen_W, screen_H - bottom_panel_height), 2)
+
+        # Draw top panel buttons and check for hover
+        for btn in buttons:
+            hovered = draw_button(screen, button_font, btn["text"], btn["rect"])
+            if hovered:
+                current_tooltip = btn["tooltip"]
+                tooltip_pos = mouse_pos
+
+        # Draw bottom panel elements
         gm.draw_selector(screen, font, options, TypeOfWorld, selector_open, selector_rect)
         gm.draw_int_input(screen, font, WaterTypeWorld, int_active, int_rect)
         gm.draw_checkbox(screen, UseForestValue, checkbox_rect)
         gm.draw_int_input(screen, font, SizeOfPlanet, SizeOfPlanet_active, SizeOfPlanet_rect)
-        gm.draw_int_input(screen, font, NameOfPlanet, NameOfPlanet_active, NameOfPlanet_rect)
+        gm.draw_int_input(screen, font, NameOfPlanet, NameOfPlanet_active, NameOfPlanet_rect)  # Note: Using draw_int_input for text, assuming gm supports it or adjust if needed
         gm.draw_checkbox(screen, AddExtUp, AddExtUp_rect)
         gm.draw_checkbox(screen, AddExtCent, AddExtCent_rect)
         gm.draw_checkbox(screen, AddExtDown, AddExtDown_rect)
 
+        # Check for hover on bottom elements and set tooltips
+        if selector_rect.collidepoint(mouse_pos):
+            current_tooltip = selector_tooltip
+            tooltip_pos = mouse_pos
+        elif int_rect.collidepoint(mouse_pos):
+            current_tooltip = water_tooltip
+            tooltip_pos = mouse_pos
+        elif checkbox_rect.collidepoint(mouse_pos):
+            current_tooltip = forest_tooltip
+            tooltip_pos = mouse_pos
+        elif SizeOfPlanet_rect.collidepoint(mouse_pos):
+            current_tooltip = size_tooltip
+            tooltip_pos = mouse_pos
+        elif NameOfPlanet_rect.collidepoint(mouse_pos):
+            current_tooltip = name_tooltip
+            tooltip_pos = mouse_pos
+        elif AddExtUp_rect.collidepoint(mouse_pos):
+            current_tooltip = up_ext_tooltip
+            tooltip_pos = mouse_pos
+        elif AddExtCent_rect.collidepoint(mouse_pos):
+            current_tooltip = cent_ext_tooltip
+            tooltip_pos = mouse_pos
+        elif AddExtDown_rect.collidepoint(mouse_pos):
+            current_tooltip = down_ext_tooltip
+            tooltip_pos = mouse_pos
+
+        # Render planet in main area
         texture = gm.MakePlanet(GUI_Planet.planet)
-        screen.blit(texture, (0, 0))
+        # Adjust blit position to account for top panel
+        screen.blit(texture, (0, top_panel_height))
         screen.blit(NameOfPlanet_FONT, NameOfPlanet_FONT_rect)
 
         if show_menu:
             menu_rect = gm.draw_menu(screen, font, menu_type, menu_items, menu_pos)
+
+        # Draw tooltip last
+        draw_tooltip(screen, font, current_tooltip, tooltip_pos)
 
         pg.display.flip()
 
