@@ -459,7 +459,6 @@ class DesertOasisPlanet(PlanetType):
             return lnd.Salt_Lake()
         return lnd.Water()
 
-
 def get_subclasses_dict(base_class):
     subclasses = {}
     current_module = sys.modules[__name__]
