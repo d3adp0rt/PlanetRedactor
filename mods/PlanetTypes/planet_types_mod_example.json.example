@@ -1,0 +1,71 @@
+{
+  "mod_info": {
+    "name": "Advanced Planet Types Pack",
+    "version": "1.0.0",
+    "author": "ModAuthor",
+    "description": "Добавляет новые типы планет в игру"
+  },
+  "planet_types": [
+    {
+      "name": "MysticPlanet",
+      "noise_params": {
+        "scale": 0.13,
+        "octaves": 5,
+        "persistence": 0.55
+      },
+      "terrain_landscapes": [
+        {"landscape": "CrystalFormations", "probability": 0.4},
+        {"landscape": "Plains", "probability": 0.3},
+        {"landscape": "Mountains", "probability": 0.2},
+        {"landscape": "Gardens", "probability": 0.1}
+      ],
+      "forest_chance": 25,
+      "water_landscapes": {
+        "river": "CrystalStream",
+        "ocean": "CrystalLake",
+        "sea": "CrystalPool",
+        "default": "CrystalPool"
+      }
+    },
+    {
+      "name": "StormyPlanet",
+      "noise_params": {
+        "scale": 0.18,
+        "octaves": 6,
+        "persistence": 0.7
+      },
+      "terrain_landscapes": [
+        {"landscape": "Plains", "probability": 0.5},
+        {"landscape": "Hills", "probability": 0.3},
+        {"landscape": "Mountains", "probability": 0.2}
+      ],
+      "forest_chance": 15,
+      "water_landscapes": {
+        "river": "River",
+        "ocean": "Ocean",
+        "sea": "Water",
+        "default": "Water"
+      }
+    },
+    {
+      "name": "FloatingRocksPlanet",
+      "noise_params": {
+        "scale": 0.08,
+        "octaves": 4,
+        "persistence": 0.6
+      },
+      "terrain_landscapes": [
+        {"landscape": "Mountains", "probability": 0.6},
+        {"landscape": "CrystalFormations", "probability": 0.2},
+        {"landscape": "Plains", "probability": 0.2}
+      ],
+      "forest_chance": 5,
+      "water_landscapes": {
+        "river": "River",
+        "ocean": "Ocean",
+        "sea": "Water",
+        "default": "Water"
+      }
+    }
+  ]
+}
