@@ -256,31 +256,38 @@ def load_building_mods():
     if not os.path.exists(mods_path):
         return
     
-    for filename in os.listdir(mods_path):
-        if filename.endswith('.json'):
-            try:
-                with open(os.path.join(mods_path, filename), 'r', encoding='utf-8') as f:
-                    mod_data = json.load(f)
+    for item in os.listdir(mods_path):
+        mod_folder_path = os.path.join(mods_path, item)
+        
+        if not os.path.isdir(mod_folder_path):
+            continue
+            
+        for filename in os.listdir(mod_folder_path):
+            if filename.endswith('.json'):
+                json_file_path = os.path.join(mod_folder_path, filename)
                 
-                mod_info = mod_data.get("mod_info", {})
-                mod_name = mod_info.get("name", "Unknown Mod")
-                mod_version = mod_info.get("version", "Unknown Version")
-                mod_author = mod_info.get("author", "Unknown Author")
-                mod_description = mod_info.get("description", "")
+                try:
+                    with open(json_file_path, 'r', encoding='utf-8') as f:
+                        mod_data = json.load(f)
+                    
+                    mod_info = mod_data.get("mod_info", {})
+                    mod_name = mod_info.get("name", item) 
+                    mod_version = mod_info.get("version", "Unknown Version")
+                    mod_author = mod_info.get("author", "Unknown Author")
+                    mod_description = mod_info.get("description", "")
 
-                print("=" * 10 + " MOD INFO " + "=" * 10)
-                print(f"Loading mod: {mod_name} v{mod_version} by {mod_author}")
-                if mod_description:
-                    print(f"Description: {mod_description}")
-                print("=" * 30, '\n')
+                    print("=" * 10 + " MOD INFO " + "=" * 10)
+                    print(f"Loading mod: {mod_name} v{mod_version} by {mod_author}")
+                    if mod_description:
+                        print(f"Description: {mod_description}")
+                    print("=" * 30, '\n')
 
-                if 'buildings' in mod_data:
-                    for building_data in mod_data['buildings']:
-                        create_building_class_from_json(building_data)
-                        
-                        
-            except Exception as e:
-                print(f"Ошибка при загрузке мода {filename}: {e}")
+                    if 'buildings' in mod_data:
+                        for building_data in mod_data['buildings']:
+                            create_building_class_from_json(building_data)
+                            
+                except Exception as e:
+                    print(f"Ошибка при загрузке мода из {json_file_path}: {e}")
 
 def create_building_class_from_json(building_data):
     """Создает класс строения из JSON данных"""

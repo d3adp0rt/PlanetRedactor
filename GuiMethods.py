@@ -54,86 +54,142 @@ def get_random_texture(texture_name: str):
         selected_variants[texture_name] = placeholder
         return placeholder
 
-def load_texture_variants(path: str, texture_name: str, target_size=(183, 183)):
+def _find_mods_root(candidate_path: str):
+    candidates = [
+        os.path.join(candidate_path, "mods"),
+        os.path.join(os.path.dirname(candidate_path), "mods"),
+        os.path.join(os.getcwd(), "mods"),
+    ]
+    for c in candidates:
+        if os.path.isdir(c):
+            return c
+    return None
+
+def _search_mods_for_texture(mods_root: str, category: str, texture_name: str):
+    category_root = os.path.join(mods_root, category)
+    if not os.path.isdir(category_root):
+        return None, None
+    for modname in sorted(os.listdir(category_root)):
+        modpath = os.path.join(category_root, modname)
+        if not os.path.isdir(modpath):
+            continue
+        for root, dirs, files in os.walk(modpath):
+            if texture_name in dirs:
+                candidate = os.path.join(root, texture_name)
+                pngs = [f for f in os.listdir(candidate) if f.lower().endswith('.png')]
+                if pngs:
+                    return candidate, True
+            pname = f"{texture_name}.png"
+            if pname in files:
+                return os.path.join(root, pname), False
+    return None, None
+
+def _load_pngs_from_folder(folder_path: str, target_size):
+    variants = []
+    png_files = [f for f in sorted(os.listdir(folder_path)) if f.lower().endswith('.png')]
+    for png in png_files:
+        try:
+            tex = pg.image.load(os.path.join(folder_path, png)).convert_alpha()
+            tex = pg.transform.scale(tex, target_size)
+            variants.append(tex)
+        except pg.error as e:
+            print(f"Ошибка загрузки текстуры {os.path.join(folder_path, png)}: {e}")
+    return variants
+
+def _load_single_png(file_path: str, target_size):
+    try:
+        tex = pg.image.load(file_path).convert_alpha()
+        tex = pg.transform.scale(tex, target_size)
+        return tex
+    except pg.error as e:
+        print(f"Ошибка загрузки текстуры {file_path}: {e}")
+        return None
+
+def load_texture_variants(path: str, texture_name: str, target_size=(183, 183), category_hint="both"):
     variants = []
     texture_folder = os.path.join(path, texture_name)
-    
-    if os.path.exists(texture_folder) and os.path.isdir(texture_folder):
-        png_files = [f for f in os.listdir(texture_folder) if f.lower().endswith('.png')]
-        
-        for png_file in sorted(png_files): 
-            try:
-                texture_path = os.path.join(texture_folder, png_file)
-                menutexture = pg.image.load(texture_path).convert_alpha()
-                texture = pg.transform.scale(menutexture, target_size)
-                variants.append(texture)
-            except pg.error as e:
-                print(f"Ошибка загрузки текстуры {texture_path}: {e}")
-    
+    if os.path.isdir(texture_folder):
+        variants = _load_pngs_from_folder(texture_folder, target_size)
+    if not variants:
+        single_path = os.path.join(path, f"{texture_name}.png")
+        if os.path.exists(single_path):
+            tex = _load_single_png(single_path, target_size)
+            if tex:
+                variants = [tex]
+    if not variants:
+        mods_root = _find_mods_root(path)
+        if mods_root:
+            cats = []
+            if category_hint == "landscapes":
+                cats = ["Landscapes"]
+            elif category_hint == "buildings":
+                cats = ["Buildings"]
+            else:
+                cats = ["Landscapes", "Buildings"]
+            found = False
+            for cat in cats:
+                found_path, is_folder = _search_mods_for_texture(mods_root, cat, texture_name)
+                if found_path:
+                    if is_folder:
+                        loaded = _load_pngs_from_folder(found_path, target_size)
+                        if loaded:
+                            variants = loaded
+                            print(f"[INFO]: Для {texture_name} найдено {len(loaded)} вариантов в моде ({found_path})")
+                            found = True
+                            break
+                    else:
+                        tex = _load_single_png(found_path, target_size)
+                        if tex:
+                            variants = [tex]
+                            print(f"[INFO]: Для {texture_name} найден файл в модах: {found_path}")
+                            found = True
+                            break
+            if not found:
+                print(f"[INFO]: {texture_name} не найден в стандартной папке и не найден в {mods_root}. Будет использован placeholder.")
+        else:
+            print(f"[INFO]: {texture_name} не найден в стандартной папке и папка 'mods' не обнаружена. Будет использован placeholder.")
     if not variants:
         variants.append(create_placeholder_texture(*target_size))
         print(f"[INFO]: Для {texture_name} используется placeholder текстура")
-    
     return variants
 
 def LoadTextures(path: str):
     global textures, texture_variants, placeholder
-
     placeholder = pg.image.load("textures/PlaceHolder.png").convert_alpha()
     placeholder = pg.transform.scale(placeholder, (183, 183))
-    
     landscape_types = list(pt.LandscapeTypes.keys())
     forest_buildings = list(pt.ForestTypes.keys())
-    
     for landscape_type in landscape_types:
-        texture_variants[landscape_type] = load_texture_variants(path, landscape_type)
-    
+        texture_variants[landscape_type] = load_texture_variants(path, landscape_type, (183, 183), category_hint="landscapes")
     for forest_type in forest_buildings:
-        texture_variants[forest_type] = load_texture_variants(path, forest_type)
-    
+        texture_variants[forest_type] = load_texture_variants(path, forest_type, (183, 183), category_hint="landscapes")
     building_types = [bt for bt in pt.BuildingTypes.keys() if bt not in forest_buildings]
     for building_type in building_types:
-        texture_path = os.path.join(path, f"{building_type}.png")
-        if os.path.exists(texture_path):
-            try:
-                textures[building_type] = pg.image.load(texture_path).convert_alpha()
-                textures[building_type] = pg.transform.scale(textures[building_type], (183, 183))
-            except pg.error as e:
-                print(f"Ошибка загрузки {building_type}: {e}")
-                textures[building_type] = create_placeholder_texture(183, 183)
-        else:
-            textures[building_type] = create_placeholder_texture(183, 183)
-    
+        variants = load_texture_variants(path, building_type, (183, 183), category_hint="buildings")
+        texture_variants[building_type] = variants
+        textures[building_type] = variants[0] if variants else create_placeholder_texture(183, 183)
     level_textures = ["Lvl_0", "Lvl_1", "Lvl_2", "Lvl_3", "Lvl_4", "DES_Lvl_1", "DES_Lvl_2", "DES_Lvl_3", "DES_Lvl_4"]
     for level_name in level_textures:
-        texture_path = os.path.join(path, f"{level_name}.png")
-        if os.path.exists(texture_path):
-            try:
-                textures[level_name] = pg.image.load(texture_path).convert_alpha()
-                textures[level_name] = pg.transform.scale(textures[level_name], (183, 183))
-            except pg.error as e:
-                print(f"Ошибка загрузки {level_name}: {e}")
-                textures[level_name] = create_placeholder_texture(183, 183)
-        else:
-            textures[level_name] = create_placeholder_texture(183, 183)
-    
+        variants = load_texture_variants(path, level_name, (183, 183), category_hint="buildings")
+        texture_variants[level_name] = variants
+        textures[level_name] = variants[0]
     regions = {
-        "CenterReg": "CenterReg.png",
-        "LowerReg": "LowerReg.png", 
-        "UpperReg": "UpperReg.png",
+        "CenterReg": ("CenterReg.png", (517, 455)),
+        "LowerReg": ("LowerReg.png", (517, 455)),
+        "UpperReg": ("UpperReg.png", (517, 455)),
     }
-
-    for region_name, filename in regions.items():
-        texture_path = os.path.join(path, filename)
-        if os.path.exists(texture_path):
+    for region_name, (filename, size) in regions.items():
+        standard_path = os.path.join(path, filename)
+        if os.path.exists(standard_path):
             try:
-                textures[region_name] = pg.image.load(texture_path).convert_alpha()
-                textures[region_name] = pg.transform.scale(textures[region_name], (517, 455))
+                textures[region_name] = pg.image.load(standard_path).convert_alpha()
+                textures[region_name] = pg.transform.scale(textures[region_name], size)
             except pg.error as e:
                 print(f"Ошибка загрузки {region_name}: {e}")
-                textures[region_name] = create_placeholder_texture(517, 455)
+                textures[region_name] = create_placeholder_texture(*size)
         else:
-            textures[region_name] = create_placeholder_texture(517, 455)
+            variants = load_texture_variants(path, os.path.splitext(filename)[0], size, category_hint="landscapes")
+            textures[region_name] = variants[0]
 
 def reset_texture_selection():
     global selected_variants
