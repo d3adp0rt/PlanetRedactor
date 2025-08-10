@@ -119,6 +119,9 @@ def draw_tooltip(screen, font, text, pos):
         pg.draw.rect(screen, (50, 50, 50), tooltip_rect.inflate(10, 10))
         screen.blit(tooltip_surf, tooltip_rect)
 
+def calculate():
+    print(GUI_Planet.planet.calculate())
+
 def main():
     pg.init()
     font = pg.font.SysFont(None, 20)
@@ -232,7 +235,7 @@ def main():
                     elif event.key == pg.K_g:
                         GUI_Planet.planet.generate(int(WaterTypeWorld), TypeOfWorld, UseForestValue)
                     elif event.key == pg.K_c:
-                        print(GUI_Planet.planet.calculate())
+                        calculate()
                     elif event.key == pg.K_u:
                         GUI_Planet.updateSize(int(SizeOfPlanet), AddExtUp, AddExtCent, AddExtDown)
                         GUI_Planet.updateName(NameOfPlanet)
@@ -284,7 +287,7 @@ def main():
                             elif btn["text"] == "Generate":
                                 GUI_Planet.planet.generate(int(WaterTypeWorld), TypeOfWorld, UseForestValue)
                             elif btn["text"] == "Calculate":
-                                print(GUI_Planet.planet.calculate())
+                                calculate()
                             elif btn["text"] == "Update Size":
                                 GUI_Planet.updateSize(int(SizeOfPlanet), AddExtUp, AddExtCent, AddExtDown)
                                 GUI_Planet.updateName(NameOfPlanet)
