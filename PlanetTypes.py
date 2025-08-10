@@ -2,6 +2,8 @@ from abc import ABC, abstractmethod
 import inspect
 import sys
 import Landscapes as lnd
+import json
+import os
 
 class PlanetType(ABC):
     @abstractmethod
@@ -457,6 +459,7 @@ class DesertOasisPlanet(PlanetType):
             return lnd.Salt_Lake()
         return lnd.Water()
 
+
 def get_subclasses_dict(base_class):
     subclasses = {}
     current_module = sys.modules[__name__]
@@ -466,3 +469,74 @@ def get_subclasses_dict(base_class):
     return subclasses
 
 PlanetTypes = get_subclasses_dict(PlanetType)
+
+def load_planet_type_mods():
+    mods_path = "mods/PlanetTypes"
+    
+    if not os.path.exists(mods_path):
+        return
+    
+    for filename in os.listdir(mods_path):
+        if filename.endswith('.json'):
+            try:
+                with open(os.path.join(mods_path, filename), 'r', encoding='utf-8') as f:
+                    mod_data = json.load(f)
+                
+                mod_info = mod_data.get('mod_info', {})
+                print("========== MOD INFO ==========")
+                print(f"Loading mod: {mod_info.get('name', 'Unknown')} v{mod_info.get('version', '1.0.0')} by {mod_info.get('author', 'Unknown')}")
+                print(f"Description: {mod_info.get('description', 'No description')}")
+                print("==============================")
+                
+                for planet_type_data in mod_data.get('planet_types', []):
+                    create_dynamic_planet_type(planet_type_data)
+                    
+            except Exception as e:
+                print(f"Ошибка загрузки мода {filename}: {e}")
+
+def create_dynamic_planet_type(planet_data):
+    class_name = planet_data['name']
+    
+    def __init__(self):
+        pass
+    
+    def get_noise_params(self):
+        return planet_data.get('noise_params', {"scale": 0.15, "octaves": 4, "persistence": 0.6})
+    
+    def get_terrain_landscapes(self):
+        terrain_data = planet_data.get('terrain_landscapes', [])
+        result = []
+        for terrain in terrain_data:
+            landscape_class = getattr(lnd, terrain['landscape'])
+            result.append([landscape_class, terrain['probability']])
+        return result
+    
+    def get_forest_chance(self):
+        return planet_data.get('forest_chance', 0)
+    
+    def get_water_landscape(self, water_body_type, size):
+        water_mapping = planet_data.get('water_landscapes', {})
+        
+        if water_body_type == 'river':
+            landscape_name = water_mapping.get('river', 'Water')
+        elif water_body_type == 'ocean' and size >= 20:
+            landscape_name = water_mapping.get('ocean', 'Ocean')
+        elif water_body_type == 'sea' and size >= 8:
+            landscape_name = water_mapping.get('sea', 'Water')
+        else:
+            landscape_name = water_mapping.get('default', 'Water')
+            
+        return getattr(lnd, landscape_name)()
+    
+    dynamic_class = type(class_name, (PlanetType,), {
+        '__init__': __init__,
+        'get_noise_params': get_noise_params,
+        'get_terrain_landscapes': get_terrain_landscapes,
+        'get_forest_chance': get_forest_chance,
+        'get_water_landscape': get_water_landscape
+    })
+    
+    globals()[class_name] = dynamic_class
+    PlanetTypes[class_name] = dynamic_class
+
+load_planet_type_mods()
