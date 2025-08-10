@@ -192,7 +192,7 @@ def select_json_file(start_path="."):
     return result["selected"]
 
 def create_placeholder_texture(w, h):
-    surf = pg.Surface((w, h))
+    surf = pg.Surface((w, h), pg.SRCALPHA)
     surf.blit(placeholder, (0, 0))
     return surf
 
