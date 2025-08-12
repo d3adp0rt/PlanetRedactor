@@ -143,7 +143,7 @@ def main():
 
     # Define panel dimensions
     top_panel_height = 50
-    bottom_panel_height = 100
+    bottom_panel_height = 200
     side_panel_width = 300  # Right panel for tools/menus if needed
 
     # Top panel: Action buttons

@@ -529,7 +529,7 @@ def get_available_levels(building_type):
     else:
         return [1, 2, 3, 4]
 
-def process_selector(rect, options, selected, open_flag, mouse_pos, mouse_click, max_height=100):
+def process_selector(rect, options, selected, open_flag, mouse_pos, mouse_click, max_height=160):
     max_items_per_col = max_height // rect.height
     num_cols = (len(options) + max_items_per_col - 1) // max_items_per_col
 
@@ -610,7 +610,7 @@ def process_checkbox(rect, value, mouse_pos, mouse_click):
         value = not value
     return value
 
-def draw_selector(screen, font, options, selected, is_open, rect, max_height=100):
+def draw_selector(screen, font, options, selected, is_open, rect, max_height=160):
     pg.draw.rect(screen, (70, 70, 70), rect)
     txt_surf = font.render(selected, True, (255, 255, 255))
     screen.blit(txt_surf, (rect.x + 5, rect.y + 5))

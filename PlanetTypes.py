@@ -459,6 +459,25 @@ class DesertOasisPlanet(PlanetType):
             return lnd.Salt_Lake()
         return lnd.Water()
 
+class CrystallinePlanet(PlanetType):
+    def get_noise_params(self):
+        return {"scale": 0.07, "octaves": 5, "persistence": 0.5}
+
+    def get_terrain_landscapes(self):
+        return [[lnd.CrystalFormations, 0.5], [lnd.Mountains, 0.2], [lnd.CrystalCaves, 0.1]]
+
+    def get_forest_chance(self):
+        return 5
+
+    def get_water_landscape(self, water_body_type, size):
+        if water_body_type == 'river':
+            return lnd.CrystalStream()
+        elif water_body_type == 'ocean' and size >= 20:
+            return lnd.CrystalLake()
+        elif water_body_type == 'sea' and size >= 8:
+            return lnd.CrystalPool()
+        return lnd.CrystalPool()
+
 def get_subclasses_dict(base_class):
     subclasses = {}
     current_module = sys.modules[__name__]
