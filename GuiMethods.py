@@ -410,21 +410,35 @@ def get_tile_positions(region_type, block_x, region_offset_x, region_offset_y):
 
 def find_clicked_tile(mouse_pos, planet):
     mx, my = mouse_pos
+
+    # смещение относительно позиции планеты
+    planet_x, planet_y = 0, 40
+    mx -= planet_x
+    my -= planet_y
+
     BLOCK_WIDTH = 208
     total_blocks = (len(planet.Regions) + 2) // 3
+
     for block_idx in range(total_blocks):
         base_x = block_idx * BLOCK_WIDTH
         block_regions = planet.Regions[block_idx*3:block_idx*3 + 3]
         offsets = [(72, 1), (2, 123), (70, 244)]
+
         for i, region in enumerate(block_regions):
             try:
                 off_x, off_y = offsets[i]
                 positions = get_tile_positions(region.typeL, 0, base_x + off_x, off_y)
                 tile_size = 183 * SCALE
+
                 for idx, (tile_cx, tile_cy) in enumerate(positions):
-                    if point_in_hexagon((mx, my), (tile_cx + tile_size / 2, tile_cy + tile_size / 2), tile_size):
+                    if point_in_hexagon(
+                        (mx, my),
+                        (tile_cx + tile_size / 2, tile_cy + tile_size / 2),
+                        tile_size
+                    ):
                         return region, idx
-            except: continue
+            except:
+                continue
     return None
 
 def get_preview_texture(item_name: str):
